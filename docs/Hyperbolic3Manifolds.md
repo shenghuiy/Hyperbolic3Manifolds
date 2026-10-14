@@ -66,7 +66,7 @@ In the Klein model, each bisector is a flat plane, so $D$ is a convex Euclidean 
 Requires Wolfram 15.0.1 or later. Load the package with an absolute path:
 
 ```wolfram
-Get["/absolute/path/LowDimTopology/Hyperbolic3Manifolds.wl"];
+Get["/absolute/path/Hyperbolic3Manifolds/Hyperbolic3Manifolds.wl"];
 
 t = DecodeTriangulation["cPcbbbiht"];          (* figure-eight knot complement *)
 ValidateIdealTriangulation[t]

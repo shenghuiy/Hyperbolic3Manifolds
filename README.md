@@ -19,12 +19,12 @@ The domain has **161 vertices, 243 edges, 84 faces**, and one ideal vertex. The 
 Wolfram 15.0.1 was used. From a terminal, use an absolute script path:
 
 ```sh
-/Applications/Wolfram.app/Contents/MacOS/WolframKernel -script /absolute/path/LowDimTopology/Run14n12345.wl
-/Applications/Wolfram.app/Contents/MacOS/WolframKernel -script /absolute/path/LowDimTopology/RunTests.wl
-/Applications/Wolfram.app/Contents/MacOS/WolframKernel -script /absolute/path/LowDimTopology/CheckPrecision.wl
+/Applications/Wolfram.app/Contents/MacOS/WolframKernel -script /absolute/path/Hyperbolic3Manifolds/Run14n12345.wl
+/Applications/Wolfram.app/Contents/MacOS/WolframKernel -script /absolute/path/Hyperbolic3Manifolds/RunTests.wl
+/Applications/Wolfram.app/Contents/MacOS/WolframKernel -script /absolute/path/Hyperbolic3Manifolds/CheckPrecision.wl
 ```
 
-Alternatively, evaluate `Get["/absolute/path/LowDimTopology/Run14n12345.wl"]` in a notebook. The supplied small JSON record is sufficient to run the geometry offline. `ImportDataset.wl` extracts it again from the pinned CSV, downloading the CSV if absent. The importer uses a checked parser for this unquoted row, not a general CSV parser. PNG export needs a functioning Wolfram graphics renderer; numerical computation does not require a notebook front end.
+Alternatively, evaluate `Get["/absolute/path/Hyperbolic3Manifolds/Run14n12345.wl"]` in a notebook. The supplied small JSON record is sufficient to run the geometry offline. `ImportDataset.wl` extracts it again from the pinned CSV, downloading the CSV if absent. The importer uses a checked parser for this unquoted row, not a general CSV parser. PNG export needs a functioning Wolfram graphics renderer; numerical computation does not require a notebook front end.
 
 ## Mathematical pipeline
 
