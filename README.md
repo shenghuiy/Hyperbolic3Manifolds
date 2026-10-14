@@ -95,3 +95,5 @@ Reproduce from the project directory:
 See `outputs/snappy-comparison/comparison.md`, `comparison.csv`, and
 `comparison.json` for the complete table. Raw engine results and the exact
 sample records are retained in the same directory.
+
+Full package documentation: [docs/Hyperbolic3Manifolds.md](docs/Hyperbolic3Manifolds.md).
