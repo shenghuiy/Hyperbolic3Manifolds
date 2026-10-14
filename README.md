@@ -1,116 +1,146 @@
 # Hyperbolic 3-manifolds in Wolfram Language
 
-A reproducible continuation of the [shared discussion](https://chatgpt.com/s/cx_6acfd5ee2c588191a692c39b136afa23), starting with the public triangulation for **K14n12345**. The geometry, linear algebra, numerical integration, and graphics are implemented in Wolfram Language. No SnapPy, SnapPea, Regina, Python, or external geometry engine is called by the computation.
+Computes the complete hyperbolic structure, holonomy representation, Dirichlet domain and volume of a cusped hyperbolic 3-manifold from an ideal triangulation, entirely in Wolfram Language. The input is an isomorphism signature, the compact text encoding of a triangulation used by SnapPy and Regina. The geometry, linear algebra, integration and graphics are all computed here; SnapPy, Regina and Python are not called.
 
-## Open the result
+The main example is the complement of the knot **K14n12345** (20 ideal tetrahedra). K5a1 and the figure-eight knot are used as regressions.
 
-Open `outputs/14n12345-Wolfram.nb` in Wolfram Desktop. It contains rotatable Poincare and Klein views of the computed polyhedron. `outputs/results.json` contains numerical diagnostics, and the WXF files preserve the shapes, holonomy matrices, domain, and quadrature results.
+## Background
 
-Computed tetrahedral volume:
+### Knot complements and ideal triangulations
+
+By Thurston's hyperbolization theorem, the complement $M = S^3 \setminus K$ of a knot that is neither a torus knot nor a satellite admits a unique complete hyperbolic metric of finite volume (unique by Mostow–Prasad rigidity). So hyperbolic invariants such as the volume are topological invariants of the knot.
+
+Such an $M$ can be cut into **ideal tetrahedra**: tetrahedra with their vertices removed, glued face to face. The removed vertices form the cusp. A small neighbourhood of an ideal vertex is a cone on a triangle, and these triangles fit together into the **vertex link**. For a knot complement the link is a single torus (Euler characteristic 0).
+
+### Hyperbolic ideal tetrahedra
+
+In the upper half-space model $\mathbb{H}^3 = \{(z,t) : z \in \mathbb{C},\ t > 0\}$, an ideal tetrahedron has its four vertices on the sphere at infinity $\hat{\mathbb{C}}$. Up to isometry they are $0, 1, \infty, z$ with $\operatorname{Im} z > 0$, so a tetrahedron is determined by one complex **shape parameter** $z$. Opposite edges carry the same dihedral angle, and the three angles $\alpha, \beta, \gamma$ satisfy $\alpha + \beta + \gamma = \pi$. Its volume is
+
+$$\operatorname{vol} = \Lambda(\alpha) + \Lambda(\beta) + \Lambda(\gamma), \qquad \Lambda(\theta) = -\int_0^\theta \log|2\sin u|\,du,$$
+
+where $\Lambda$ is the Lobachevsky function.
+
+### From angles to the complete structure
+
+An **angle structure** assigns positive angles to every tetrahedron so that each tetrahedron's angles sum to $\pi$ and the angles around each edge of the triangulation sum to $2\pi$. These are linear conditions, so the angle structures form an open convex polytope $\mathcal{A}$. The Casson–Rivin theorem says the volume functional $\mathcal{V} = \sum \Lambda$ is strictly concave on $\mathcal{A}$, and that an interior critical point gives shapes satisfying both the gluing equations (the shapes around every edge multiply to 1) and the cusp completeness equations. So the hyperbolic structure is found by maximizing a concave function on a polytope, instead of solving the nonlinear gluing equations directly. Solving only the edge equations would give a hyperbolic structure that may be incomplete, which is why the volume maximization is used.
+
+### Holonomy and the Dirichlet domain
+
+Developing the tetrahedra into $\mathbb{H}^3$ turns each face gluing into an isometry of $\mathbb{H}^3$, that is, an element of $\mathrm{PSL}(2,\mathbb{C})$. These generate the **holonomy group** $\Gamma \cong \pi_1(M)$, and $M = \mathbb{H}^3/\Gamma$. Given a basepoint $x$, the **Dirichlet domain**
+
+$$D = \{\, y \in \mathbb{H}^3 : d(y, x) \le d(y, \gamma x) \text{ for all } \gamma \in \Gamma \,\}$$
+
+is a convex fundamental polyhedron for $\Gamma$. Its faces come in pairs identified by group elements. In the Klein model each bisector is a flat plane, so $D$ is a convex Euclidean polyhedron in the unit ball, and its volume can be integrated directly. That gives a second, independent computation of $\operatorname{vol}(M)$.
+
+## Algorithm
+
+1. **Decode the signature.** Read the base-64 encoding of face pairings and vertex permutations, rebuild reciprocal face identifications, and orient the tetrahedra. The peripheral (meridian/longitude) decoration after `_` is kept but not decoded.
+2. **Check the topology.** Build the vertex-link triangles and their gluings, reject reversed edges, and require every cusp link to have Euler characteristic 0. K14n12345 has one torus cusp.
+3. **Build the angle space.** The constraints form an exact integer matrix. For K14n12345 it has rank 39 on 60 angles, leaving 21 deformation directions. Linear programming finds a strictly positive starting point.
+4. **Maximize volume.** Newton's method on $\sum\Lambda$, restricted to the exact nullspace of the constraint matrix, at 120-digit working precision. The solver reports angle-equation, gradient and complex-gluing residuals and checks the volume against both the Bloch–Wigner formula and direct quadrature.
+5. **Build the holonomy.** Convert angles to shapes and develop adjacent tetrahedra by Möbius maps fixed by three ideal vertices. Along a spanning tree this leaves face-pairing generators in $\mathrm{PSL}(2,\mathbb{C})$. The basepoint is $(1/2, 1/3, 1)$ in upper half-space, which becomes the centre of the ball.
+6. **Build a candidate Dirichlet domain.** If the hyperboloid image of the basepoint under an isometry is $(q_0, q)$, its Klein bisector halfspace is $q \cdot k \le q_0 - 1$. Intersect halfspaces with a polar convex hull and keep adding products of the currently active generators until the polyhedron stops changing. Then check that faces pair up, that paired vertices map to each other, the Euler characteristic, and that the dihedral angles around each edge cycle sum to $2\pi$. This step is machine precision.
+7. **Integrate independently.** The Klein volume density is $(1-|k|^2)^{-2}$. The radial field $F(k) = f(r)\,k$ with
+
+   $$f(r) = \frac{r/(1-r^2) - \operatorname{artanh} r}{2r^3}$$
+
+   has exactly this divergence, so by the divergence theorem the volume is a sum of flux integrals over triangulated faces of $D$. The singularities at ideal vertices are integrable. This uses only the domain's coordinates, not the tetrahedral volumes.
+8. **Draw.** Klein edges are straight. The map $p = k/(1+\sqrt{1-|k|^2})$ gives the Poincaré ball view, where edges and faces are curved.
+
+## Results for K14n12345
+
+Tetrahedral volume (120-digit solve, stable when re-solved at 160 digits):
 
 ```
 18.36536110161047534340644954313593224436235757255441338977
 ```
 
-The domain has **161 vertices, 243 edges, 84 faces**, and one ideal vertex. The independent domain integral is approximately `18.3653611015266`, differing from the tetrahedral sum by about `8.4e-11`. The domain geometry is machine precision; printing extra quadrature digits does not increase its accuracy. The dataset's rounded volume is used only for comparison.
+The Dirichlet domain has **161 vertices, 243 edges and 84 faces**, with one ideal vertex. Its independently integrated volume is about `18.3653611015266`, which differs from the tetrahedral sum by about `8.4e-11`. Extra digits in the integral add no accuracy, because the domain is built at machine precision.
 
-## Run
+Open `outputs/14n12345-Wolfram.nb` in Wolfram Desktop for rotatable Poincaré and Klein views. `outputs/results.json` holds the numerical diagnostics, and the `.wxf` files in `outputs/` hold the shapes, holonomy matrices, domain and integral.
 
-Wolfram 15.0.1 was used. Everything runs as Wolfram test suites in `tests/`. From a terminal, use an absolute script path:
+## Running
 
-```sh
-/Applications/Wolfram.app/Contents/MacOS/WolframKernel -script /absolute/path/Hyperbolic3Manifolds/tests/RunTests.wl
-/Applications/Wolfram.app/Contents/MacOS/WolframKernel -script /absolute/path/Hyperbolic3Manifolds/tests/CheckPrecision.wl
+Requires Wolfram 15.0.1 or later. Load the package from an absolute path:
+
+```wolfram
+Get["/absolute/path/to/src/Hyperbolic3Manifolds.wl"];
+
+t = DecodeTriangulation["cPcbbbiht"];        (* figure-eight knot complement *)
+ValidateIdealTriangulation[t]
+s = SolveCompleteStructure[t, 120, 45];      (* working precision, precision goal *)
+N[s["Volume"], 20]                           (* 2.0298832128193072500 *)
+h = BuildHolonomy[t, s];
+d = BuildDirichletDomain[h];
+IntegrateDomainVolume[d, 8]["Volume"] - s["Volume"]
+DomainGraphics[d, "Poincare"]
 ```
 
-`RunTests.wl` runs the suites in order: `ImportDataset.wlt` (only if the CSV is in `data/`), `Run14n12345.wlt` (the full computation, writing `outputs/*.wxf`), `RefineIntegral.wlt`, `MakeReport.wlt` (results, notebook, preview), and `Hyperbolic3Manifolds.wlt`. Name suites as arguments to run only those, e.g. `.../tests/RunTests.wl Run14n12345 MakeReport`. In a notebook, evaluate `TestReport["/absolute/path/Hyperbolic3Manifolds/tests/Run14n12345.wlt"]`.
+Each function takes and returns an `Association`, or returns a `Failure` when the input is outside the supported scope. To reproduce the K14n12345 computation and every check from a terminal:
 
-The supplied small JSON record is sufficient to run the geometry offline. `tests/ImportDataset.wlt` re-extracts it from the pinned CSV, downloading the CSV if absent, and checks it matches the committed record. The importer uses a checked parser for this unquoted row, not a general CSV parser. PNG export needs a functioning Wolfram graphics renderer; numerical computation does not require a notebook front end.
+```sh
+/Applications/Wolfram.app/Contents/MacOS/WolframKernel -script "$PWD/tests/RunTests.wl"
+```
 
-## Dataset
+The tests, the precision check, the K5a1 regression and the SnapPy comparison are described in [`tests/README.md`](tests/README.md). The full function reference is in [`docs/Hyperbolic3Manifolds.md`](docs/Hyperbolic3Manifolds.md).
 
-The full knot database (`knots_and_links_through_14.csv`, 32 MB) is **not stored in this repository**. It comes from the [`3-manifolds/snappy_15_knots`](https://github.com/3-manifolds/snappy_15_knots) repository, pinned to commit `f3eb9cdd16e1792dd84476a945315049873e8ac1`:
+## External data
 
-- [View the CSV on GitHub](https://github.com/3-manifolds/snappy_15_knots/blob/f3eb9cdd16e1792dd84476a945315049873e8ac1/manifold_src/original_manifold_sources/knots_and_links_through_14.csv)
-- [Direct download (raw)](https://raw.githubusercontent.com/3-manifolds/snappy_15_knots/f3eb9cdd16e1792dd84476a945315049873e8ac1/manifold_src/original_manifold_sources/knots_and_links_through_14.csv)
+### The knot dataset
 
-SHA-256: `a210bc6866a22c8d3aa533a0804d650ffb68659f83ac5dcdb3ef3e57bef59464` (also recorded in `data/provenance.json`).
+Triangulations come from the knot and link census in [`3-manifolds/snappy_15_knots`](https://github.com/3-manifolds/snappy_15_knots), pinned to commit `f3eb9cdd16e1792dd84476a945315049873e8ac1`. The file `knots_and_links_through_14.csv` (32 MB) is **not stored in this repository**:
 
-The main computation does not need it: the K14n12345 record is already saved in `data/14n12345-record.json`. You need the CSV only to re-extract that record (`tests/ImportDataset.wlt` downloads it automatically) or to run the SnapPy comparison (`tests/CompareSnapPy.py prepare`). To fetch it manually:
+- [View on GitHub](https://github.com/3-manifolds/snappy_15_knots/blob/f3eb9cdd16e1792dd84476a945315049873e8ac1/manifold_src/original_manifold_sources/knots_and_links_through_14.csv)
+- SHA-256 `a210bc6866a22c8d3aa533a0804d650ffb68659f83ac5dcdb3ef3e57bef59464`, also recorded in `data/provenance.json`
 
 ```sh
 curl -L -o data/knots_and_links_through_14.csv https://raw.githubusercontent.com/3-manifolds/snappy_15_knots/f3eb9cdd16e1792dd84476a945315049873e8ac1/manifold_src/original_manifold_sources/knots_and_links_through_14.csv
+```
+
+```sh
 shasum -a 256 data/knots_and_links_through_14.csv
 ```
 
-## Mathematical pipeline
+The K14n12345 row (record 44846, CSV line 44847) is already saved in `data/14n12345-record.json`, so the main computation runs offline without the CSV.
 
-1. **Decode the isomorphism signature.** Read base-64 integers, facet actions, destination tetrahedra, and vertex permutations. Reconstruct reciprocal face identifications and orient the tetrahedra. Peripheral decoration is retained but not decoded; no meridian/longitude calculation is claimed.
-2. **Check ideal topology.** Build vertex-link triangles and their edge/vertex equivalence classes. Check for reversed tetrahedron edges and require each oriented link to have Euler characteristic zero. Here the result is one torus cusp.
-3. **Construct angle space.** Each tetrahedron contributes three opposite-edge angles summing to pi; angles around each quotient edge sum to 2 pi. The exact integer constraint matrix has rank 39 on 60 angles, giving 21 deformation directions. Linear optimization finds a strictly positive starting point.
-4. **Solve the complete structure.** Maximize the sum of Lobachevsky functions with Newton steps restricted to the exact constraint nullspace. An interior stationary point on angle space gives a complete structure under the Casson–Rivin theorem. Numerical residuals are evidence for that point, not an interval existence proof. This is why solving only the edge products would be insufficient.
-5. **Recover shapes and holonomy.** Convert angles to complex shapes and account for tetrahedron orientation. Develop adjacent tetrahedra through Mobius maps determined by three ideal vertices. Tree development leaves face-pairing generators in PSL(2,C). The chosen basepoint is `(1/2,1/3,1)` in upper half space and becomes the ball center.
-6. **Construct a candidate Dirichlet domain.** For the hyperboloid image `(q0,q)` of the basepoint under an isometry, its Klein bisector halfspace is `q.k <= q0-1`. Use a polar convex hull, adding cuts from products of current active generators until stable. Check reciprocal face identifications, vertex images, polyhedron Euler characteristic, and edge-cycle angles.
-7. **Integrate independently.** Klein hyperbolic density is `(1-|k|^2)^(-2)`. A radial vector field `F(k)=f(r) k`, with
+Each row has the columns `id, name, cusps, DT, betti, torsion, volume, chernsimons, tets, hash, triangulation`. Only `triangulation`, the isomorphism signature, is used as input. The rounded `volume` is used only for comparison.
 
-   ```
-   f(r) = (r/(1-r^2) - arctanh(r)) / (2 r^3),
-   ```
+### Running another knot from the CSV
 
-   has divergence equal to that density. The divergence theorem reduces volume to numerical integration on triangles covering the polyhedron faces. The ideal-vertex singularities are integrable. This calculation uses the domain coordinates, not the tetrahedral volume sum.
-8. **Visualize.** Klein edges are straight. The map `p=k/(1+sqrt(1-|k|^2))` produces the Poincare ball view, where geodesic edges and faces are curved.
+The CSV holds links as well as knots. At the pinned commit no row contains a quoted field, so the helper below splits rows on commas and refuses any quoted row instead of attempting general CSV parsing:
+
+```wolfram
+Get["/absolute/path/to/src/Hyperbolic3Manifolds.wl"];
+
+findKnot[file_, name_] := Module[{s = OpenRead[file], keys, line, row = Missing["NotFound"]},
+  keys = StringSplit[ReadLine[s], ","];
+  While[(line = ReadLine[s]) =!= EndOfFile,
+   If[StringContainsQ[line, "," <> name <> ","] && ! StringContainsQ[line, "\""],
+    row = AssociationThread[keys, StringSplit[line, ","]]; Break[]]];
+  Close[s]; row];
+
+r = findKnot["/absolute/path/to/data/knots_and_links_through_14.csv", "K6a1"];
+t = DecodeTriangulation[r["triangulation"]];
+ValidateIdealTriangulation[t]
+s = SolveCompleteStructure[t, 120, 45];
+{N[s["Volume"], 30], r["volume"]}       (* 5.69302109128130076511248327748, "5.6930210913" *)
+d = BuildDirichletDomain[BuildHolonomy[t, s]];
+Length /@ Lookup[d, {"Vertices", "Edges", "Faces"}]   (* {74, 112, 40} *)
+```
+
+The same works for a signature from anywhere else, for example `M.triangulation_isosig()` in SnapPy or `isoSig()` in Regina: pass the string to `DecodeTriangulation`. Before trusting a result, check the residuals in `s` (`AngleEquationResidual`, `GradientResidual`, `ComplexEdgeResidual`) and in `d` (`PairingVertexResidual`, `EdgeCycleAngleResidual`) against the thresholds in [`tests/README.md`](tests/README.md).
+
+Unsupported input fails explicitly. For example, the trefoil `K3a1` is a torus knot and not hyperbolic, and `SolveCompleteStructure` returns `Failure["NoStrictAngleStructure", ...]`.
 
 ## Scope and limitations
 
-- This is a numerical implementation for connected, orientable, face-paired ideal triangulations with torus links and an interior volume maximum. It is **not an algorithm for every 3-manifold**. Boundary faces, nonorientable input, and triangulations with no strictly positive angle structure are rejected. A failure of this solver does not prove nonhyperbolicity.
-- The signature decoder targets classic connected signatures; it does not support arbitrary newer signature variants or arbitrary cusp decorations.
-- A stabilized finite search over bisector cuts is not by itself a proof that all group elements have been considered. The face/edge diagnostics and independent volume agreement provide strong numerical checks, but do not constitute a full certified Poincare polyhedron theorem verification.
-- There is no interval certification of the complete solution, discreteness, or domain. The original dataset's knot identification is trusted; this project does not independently prove that the encoded complement belongs to the named knot.
-- The integration accuracy is limited by machine-precision domain construction. The tetrahedral solve is performed at 120-digit working precision and separately compared with 160 digits.
+- Input must be a connected, orientable ideal triangulation with every face paired, torus cusps, and a strictly positive angle structure with an interior volume maximum. Boundary faces, non-orientable input and triangulations with no strict angle structure are rejected. This is not an algorithm for every 3-manifold, and a solver failure does not prove the manifold is not hyperbolic; another triangulation may succeed.
+- The decoder handles classic connected isomorphism signatures. Newer signature variants and cusp decorations are not decoded.
+- Results are numerical evidence, not proofs. There is no interval certification of the shapes, of discreteness, or of the domain. The bisector search stops when the polyhedron stabilizes, which does not by itself show that every group element has been considered; the face and edge checks and the agreement of the two volume computations are strong checks, not a certified Poincaré polyhedron theorem verification.
+- The dataset's identification of each triangulation with a named knot is trusted, not re-proved.
 
-## Sources
+## References
 
-- [Pinned knot dataset](https://github.com/3-manifolds/snappy_15_knots/blob/f3eb9cdd16e1792dd84476a945315049873e8ac1/manifold_src/original_manifold_sources/knots_and_links_through_14.csv): record 44846, CSV line 44847. `data/provenance.json` records its URL, commit, and SHA-256.
-- [Futer and Gueritaud, From angled triangulations to hyperbolic structures](https://arxiv.org/abs/1004.0440): angle-space volume maximization and completeness.
-- Core implementation reconstructed from the shared chat, then repaired and tested locally. Tests do not rely on the unavailable prior Regina export; reciprocity, link topology, an independent figure-eight example, and independent integration are checked directly here.
-
-## Additional regression: K5a1
-
-`tests/TestK5a1.wl` runs the complete pipeline on the dataset's three-tetrahedron
-`K5a1` complement, using signature `dLQcbcciirv_BacB`. All 12 numerical checks
-passed, including an independent 160-digit solve and domain integration.
-The volume is `2.82812208833078316276389880927663494277...`; the candidate
-domain has 45 vertices, 69 edges, and 26 faces. Domain integration differs
-by approximately `1.17e-11`. Results and a rotatable notebook are in
-`outputs/K5a1/`. This test uses the same unchanged geometry package.
-
-## Fresh SnapPy comparison: 10 samples
-
-A local `.venv` was created using
-`/Library/Frameworks/Python.framework/Versions/3.12/bin/python3` (Python 3.12.10),
-with SnapPy 3.3.2. Installed versions are recorded in `tests/requirements-snappy.txt`.
-SnapPy is used only by this comparison harness; the Wolfram geometry package
-remains independent of it.
-
-The ten preselected samples are K4a1, K5a1, K6a1, K7a1, K8a1, K9a1,
-K10a1, K11n1, K12n1, and K14n12345. They span 2–20 tetrahedra.
-The comparison uses freshly computed `Manifold.high_precision().volume()`
-values from both the original signature and the knot name, against fresh
-120-digit Wolfram solves. The fixed absolute comparison tolerance is 1e-30.
-All ten passed, including the Wolfram positivity, angle, complex gluing,
-stationarity, and independent tetrahedral volume formula checks. This batch
-checks volumes; it does not construct ten Dirichlet domains or certify results.
-
-Reproduce from the project directory:
-
-```sh
-.venv/bin/python tests/CompareSnapPy.py prepare
-/Applications/Wolfram.app/Contents/MacOS/WolframKernel -script "$PWD/tests/CompareSnapPy.wl"
-.venv/bin/python tests/CompareSnapPy.py report
-```
-
-See `outputs/snappy-comparison/comparison.md`, `comparison.csv`, and
-`comparison.json` for the complete table. Raw engine results and the exact
-sample records are retained in the same directory.
-
-Full package documentation: [docs/Hyperbolic3Manifolds.md](docs/Hyperbolic3Manifolds.md).
+- W. P. Thurston, *The Geometry and Topology of Three-Manifolds*, Princeton lecture notes (1980).
+- D. Futer and F. Guéritaud, [From angled triangulations to hyperbolic structures](https://arxiv.org/abs/1004.0440), Contemporary Mathematics 541 (2011). Angle structures, the volume functional and completeness.
+- [`3-manifolds/snappy_15_knots`](https://github.com/3-manifolds/snappy_15_knots): source of the knot triangulations.
