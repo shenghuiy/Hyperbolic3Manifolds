@@ -14,9 +14,9 @@ Such an $M$ can be cut into **ideal tetrahedra**: tetrahedra with their vertices
 
 ### Hyperbolic ideal tetrahedra
 
-In the upper half-space model $\mathbb{H}^3 = \{(z,t) : z \in \mathbb{C},\ t > 0\}$, an ideal tetrahedron has its four vertices on the sphere at infinity $\hat{\mathbb{C}}$. Up to isometry they are $0, 1, \infty, z$ with $\operatorname{Im} z > 0$, so a tetrahedron is determined by one complex **shape parameter** $z$. Opposite edges carry the same dihedral angle, and the three angles $\alpha, \beta, \gamma$ satisfy $\alpha + \beta + \gamma = \pi$. Its volume is
+In the upper half-space model $\mathbb{H}^3 = \lbrace (z,t) : z \in \mathbb{C},\ t > 0 \rbrace$, an ideal tetrahedron has its four vertices on the sphere at infinity $\hat{\mathbb{C}}$. Up to isometry they are $0, 1, \infty, z$ with $\mathrm{Im}\ z > 0$, so a tetrahedron is determined by one complex **shape parameter** $z$. Opposite edges carry the same dihedral angle, and the three angles $\alpha, \beta, \gamma$ satisfy $\alpha + \beta + \gamma = \pi$. Its volume is
 
-$$\operatorname{vol} = \Lambda(\alpha) + \Lambda(\beta) + \Lambda(\gamma), \qquad \Lambda(\theta) = -\int_0^\theta \log|2\sin u|\,du,$$
+$$\mathrm{vol} = \Lambda(\alpha) + \Lambda(\beta) + \Lambda(\gamma), \qquad \Lambda(\theta) = -\int_0^\theta \log|2\sin u|\ du,$$
 
 where $\Lambda$ is the Lobachevsky function.
 
@@ -28,9 +28,9 @@ An **angle structure** assigns positive angles to every tetrahedron so that each
 
 Developing the tetrahedra into $\mathbb{H}^3$ turns each face gluing into an isometry of $\mathbb{H}^3$, that is, an element of $\mathrm{PSL}(2,\mathbb{C})$. These generate the **holonomy group** $\Gamma \cong \pi_1(M)$, and $M = \mathbb{H}^3/\Gamma$. Given a basepoint $x$, the **Dirichlet domain**
 
-$$D = \{\, y \in \mathbb{H}^3 : d(y, x) \le d(y, \gamma x) \text{ for all } \gamma \in \Gamma \,\}$$
+$$D = \lbrace y \in \mathbb{H}^3 : d(y, x) \le d(y, \gamma x) \text{ for all } \gamma \in \Gamma \rbrace$$
 
-is a convex fundamental polyhedron for $\Gamma$. Its faces come in pairs identified by group elements. In the Klein model each bisector is a flat plane, so $D$ is a convex Euclidean polyhedron in the unit ball, and its volume can be integrated directly. That gives a second, independent computation of $\operatorname{vol}(M)$.
+is a convex fundamental polyhedron for $\Gamma$. Its faces come in pairs identified by group elements. In the Klein model each bisector is a flat plane, so $D$ is a convex Euclidean polyhedron in the unit ball, and its volume can be integrated directly. That gives a second, independent computation of $\mathrm{vol}(M)$.
 
 ## Algorithm
 
@@ -40,9 +40,9 @@ is a convex fundamental polyhedron for $\Gamma$. Its faces come in pairs identif
 4. **Maximize volume.** Newton's method on $\sum\Lambda$, restricted to the exact nullspace of the constraint matrix, at 120-digit working precision. The solver reports angle-equation, gradient and complex-gluing residuals and checks the volume against both the Bloch–Wigner formula and direct quadrature.
 5. **Build the holonomy.** Convert angles to shapes and develop adjacent tetrahedra by Möbius maps fixed by three ideal vertices. Along a spanning tree this leaves face-pairing generators in $\mathrm{PSL}(2,\mathbb{C})$. The basepoint is $(1/2, 1/3, 1)$ in upper half-space, which becomes the centre of the ball.
 6. **Build a candidate Dirichlet domain.** If the hyperboloid image of the basepoint under an isometry is $(q_0, q)$, its Klein bisector halfspace is $q \cdot k \le q_0 - 1$. Intersect halfspaces with a polar convex hull and keep adding products of the currently active generators until the polyhedron stops changing. Then check that faces pair up, that paired vertices map to each other, the Euler characteristic, and that the dihedral angles around each edge cycle sum to $2\pi$. This step is machine precision.
-7. **Integrate independently.** The Klein volume density is $(1-|k|^2)^{-2}$. The radial field $F(k) = f(r)\,k$ with
+7. **Integrate independently.** The Klein volume density is $(1-|k|^2)^{-2}$. The radial field $F(k) = f(r)\ k$ with
 
-   $$f(r) = \frac{r/(1-r^2) - \operatorname{artanh} r}{2r^3}$$
+   $$f(r) = \frac{r/(1-r^2) - \mathrm{artanh}\ r}{2r^3}$$
 
    has exactly this divergence, so by the divergence theorem the volume is a sum of flux integrals over triangulated faces of $D$. The singularities at ideal vertices are integrable. This uses only the domain's coordinates, not the tetrahedral volumes.
 8. **Draw.** Klein edges are straight. The map $p = k/(1+\sqrt{1-|k|^2})$ gives the Poincaré ball view, where edges and faces are curved.
