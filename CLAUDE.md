@@ -28,6 +28,8 @@ Suites (`tests/*.wlt`, run by `RunTests.wl` in this order):
 
 The later suites read files the `Run14n12345` suite writes, so run it first (`RunTests.wl` does). Inside a `.wlt`, never `Exit`; guard each stage with `If[AssociationQ[prev], ..., $Failed]` so a failure is reported as failed tests instead of killing `TestReport`.
 
+A project hook (`.claude/hooks/require-tests.sh`, registered in `.claude/settings.json`) enforces this: after any edit under `src/`, Claude cannot finish until a full `tests/RunTests.wl` run newer than the edit has passed (it checks `outputs/tests.json`).
+
 Each `.wlt` is a plain sequence of setup lines and `VerificationTest[...]` with `TestID`s; to run one test, evaluate the setup lines at the top of its file plus the single `VerificationTest` in a kernel.
 
 SnapPy comparison (uses the local `.venv`, Python 3.12, pinned in `tests/requirements-snappy.txt`):
