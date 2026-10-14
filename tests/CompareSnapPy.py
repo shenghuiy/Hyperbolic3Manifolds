@@ -6,7 +6,7 @@ import csv, json, sys, platform
 from pathlib import Path
 from decimal import Decimal, localcontext
 import snappy
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / 'outputs' / 'snappy-comparison'
 NAMES = ['K4a1','K5a1','K6a1','K7a1','K8a1','K9a1','K10a1','K11n1','K12n1','K14n12345']
 OUT.mkdir(parents=True, exist_ok=True)

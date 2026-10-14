@@ -1,5 +1,5 @@
-root=DirectoryName[$InputFileName];
-Get[FileNameJoin[{root,"Hyperbolic3Manifolds.wl"}]];
+root=ParentDirectory[DirectoryName[$InputFileName]];
+Get[FileNameJoin[{root,"src","Hyperbolic3Manifolds.wl"}]];
 out=FileNameJoin[{root,"outputs","K5a1"}];If[!DirectoryQ[out],CreateDirectory[out]];
 require[x_]:=If[!AssociationQ[x],Print["Stage failed: ",x];Exit[1],x];
 record=<|"name"->"K5a1","id"->3,"triangulation"->"dLQcbcciirv_BacB","volume"->2.8281220883,"tets"->3,"SourceCommit"->"f3eb9cdd16e1792dd84476a945315049873e8ac1"|>;

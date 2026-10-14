@@ -1,4 +1,4 @@
-root=DirectoryName[$InputFileName];Get[FileNameJoin[{root,"Hyperbolic3Manifolds.wl"}]];
+root=ParentDirectory[DirectoryName[$InputFileName]];Get[FileNameJoin[{root,"src","Hyperbolic3Manifolds.wl"}]];
 out=FileNameJoin[{root,"outputs","snappy-comparison"}];
 records=Import[FileNameJoin[{out,"samples.json"}],"RawJSON"];
 If[!ListQ[records]||Length[records]!=10,Print["Expected ten samples"];Exit[1]];

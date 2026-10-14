@@ -1,6 +1,6 @@
 (* Can be run separately after Run14n12345.wl to refresh presentation. *)
 root=DirectoryName[$InputFileName];out=FileNameJoin[{root,"outputs"}];
-Get[FileNameJoin[{root,"Hyperbolic3Manifolds.wl"}]];
+Get[FileNameJoin[{root,"src","Hyperbolic3Manifolds.wl"}]];
 record=Import[FileNameJoin[{root,"data","14n12345-record.json"}],"RawJSON"];
 structure=Import[FileNameJoin[{out,"structure.wxf"}],"WXF"];
 domain=Import[FileNameJoin[{out,"domain.wxf"}],"WXF"];

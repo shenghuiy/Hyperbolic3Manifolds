@@ -1,6 +1,6 @@
 # Hyperbolic3Manifolds — package documentation
 
-`Hyperbolic3Manifolds.wl` is a Wolfram Language package that takes a cusped 3-manifold given as an ideal triangulation and computes its complete hyperbolic structure, holonomy, a candidate Dirichlet domain, and its volume (computed in two independent ways). It uses no SnapPy, SnapPea, Regina, or Python. The only outside input is the combinatorial triangulation from a public dataset.
+`src/Hyperbolic3Manifolds.wl` is a Wolfram Language package that takes a cusped 3-manifold given as an ideal triangulation and computes its complete hyperbolic structure, holonomy, a candidate Dirichlet domain, and its volume (computed in two independent ways). It uses no SnapPy, SnapPea, Regina, or Python. The only outside input is the combinatorial triangulation from a public dataset.
 
 This document covers:
 
@@ -66,7 +66,7 @@ In the Klein model, each bisector is a flat plane, so $D$ is a convex Euclidean 
 Requires Wolfram 15.0.1 or later. Load the package with an absolute path:
 
 ```wolfram
-Get["/absolute/path/Hyperbolic3Manifolds/Hyperbolic3Manifolds.wl"];
+Get["/absolute/path/Hyperbolic3Manifolds/src/Hyperbolic3Manifolds.wl"];
 
 t = DecodeTriangulation["cPcbbbiht"];          (* figure-eight knot complement *)
 ValidateIdealTriangulation[t]
@@ -87,7 +87,7 @@ To run the full K14n12345 computation and its tests from a terminal (the scripts
 
 ```sh
 /Applications/Wolfram.app/Contents/MacOS/WolframKernel -script "$PWD/Run14n12345.wl"
-/Applications/Wolfram.app/Contents/MacOS/WolframKernel -script "$PWD/RunTests.wl"
+/Applications/Wolfram.app/Contents/MacOS/WolframKernel -script "$PWD/tests/RunTests.wl"
 ```
 
 ---
@@ -294,16 +294,16 @@ Results: `outputs/results.json`, `outputs/14n12345-Wolfram.nb` (rotatable Poinca
 
 ### 6.3 K5a1 (regression, unchanged package)
 
-Signature `dLQcbcciirv_BacB`, 3 tetrahedra. All 12 checks in `TestK5a1.wl` pass. The volume is `2.82812208833078316276389880927663494277…`. The domain has 45 vertices, 69 edges, and 26 faces, and the integral differs by about $1.17\times10^{-11}$. Results are in `outputs/K5a1/`.
+Signature `dLQcbcciirv_BacB`, 3 tetrahedra. All 12 checks in `tests/TestK5a1.wl` pass. The volume is `2.82812208833078316276389880927663494277…`. The domain has 45 vertices, 69 edges, and 26 faces, and the integral differs by about $1.17\times10^{-11}$. Results are in `outputs/K5a1/`.
 
 ### 6.4 Comparison with SnapPy (10 samples)
 
-`CompareSnapPy.py` runs SnapPy 3.3.2 in a separate `.venv` (Python 3.12) and computes `Manifold.high_precision().volume()` from both the signature and the knot name. `CompareSnapPy.wl` solves the same records independently at 120 digits. All ten samples agree within a tolerance of $10^{-30}$: K4a1, K5a1, K6a1, K7a1, K8a1, K9a1, K10a1, K11n1, K12n1, and K14n12345 (2–20 tetrahedra). This batch compares volumes only. No SnapPy output is ever passed into the Wolfram solver. See `outputs/snappy-comparison/comparison.md`.
+`tests/CompareSnapPy.py` runs SnapPy 3.3.2 in a separate `.venv` (Python 3.12) and computes `Manifold.high_precision().volume()` from both the signature and the knot name. `tests/CompareSnapPy.wl` solves the same records independently at 120 digits. All ten samples agree within a tolerance of $10^{-30}$: K4a1, K5a1, K6a1, K7a1, K8a1, K9a1, K10a1, K11n1, K12n1, and K14n12345 (2–20 tetrahedra). This batch compares volumes only. No SnapPy output is ever passed into the Wolfram solver. See `outputs/snappy-comparison/comparison.md`.
 
 ```sh
-.venv/bin/python CompareSnapPy.py prepare
-/Applications/Wolfram.app/Contents/MacOS/WolframKernel -script "$PWD/CompareSnapPy.wl"
-.venv/bin/python CompareSnapPy.py report
+.venv/bin/python tests/CompareSnapPy.py prepare
+/Applications/Wolfram.app/Contents/MacOS/WolframKernel -script "$PWD/tests/CompareSnapPy.wl"
+.venv/bin/python tests/CompareSnapPy.py report
 ```
 
 ---

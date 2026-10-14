@@ -1,5 +1,5 @@
-root=DirectoryName[$InputFileName];
-Get[FileNameJoin[{root,"Hyperbolic3Manifolds.wl"}]];
+root=ParentDirectory[DirectoryName[$InputFileName]];
+Get[FileNameJoin[{root,"src","Hyperbolic3Manifolds.wl"}]];
 record=Import[FileNameJoin[{root,"data","14n12345-record.json"}],"RawJSON"];
 tri=DecodeTriangulation[record["triangulation"]];
 VerificationTest[tri["Tetrahedra"],20,TestID->"Dataset tetrahedron count"]

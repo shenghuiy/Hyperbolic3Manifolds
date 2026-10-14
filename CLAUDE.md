@@ -8,32 +8,32 @@ A Wolfram Language implementation that computes the complete hyperbolic structur
 
 ## Commands
 
-Wolfram 15.0.1. Scripts locate files via `DirectoryName[$InputFileName]`, so they **must be run with an absolute script path**:
+Wolfram 15.0.1. Scripts locate the repo root via `$InputFileName` (top-level drivers use their own directory; scripts in `tests/` use its parent), so they **must be run with an absolute script path**. Layout: `src/` holds the package, `tests/` holds the test suite and validation scripts, top-level `.wl` files are drivers.
 
 ```sh
 K=/Applications/Wolfram.app/Contents/MacOS/WolframKernel
 $K -script "$PWD/Run14n12345.wl"     # full pipeline -> outputs/*.wxf, then runs MakeReport.wl
-$K -script "$PWD/RunTests.wl"        # runs Hyperbolic3Manifolds.wlt, writes outputs/tests.json, exit 1 on failure
-$K -script "$PWD/CheckPrecision.wl"  # re-solve at 160 digits, compare to outputs/structure.wxf
-$K -script "$PWD/TestK5a1.wl"        # end-to-end regression on K5a1 -> outputs/K5a1/
+$K -script "$PWD/tests/RunTests.wl"        # runs tests/Hyperbolic3Manifolds.wlt, writes outputs/tests.json, exit 1 on failure
+$K -script "$PWD/tests/CheckPrecision.wl"  # re-solve at 160 digits, compare to outputs/structure.wxf
+$K -script "$PWD/tests/TestK5a1.wl"        # end-to-end regression on K5a1 -> outputs/K5a1/
 $K -script "$PWD/RefineIntegral.wl"  # re-integrate an existing outputs/domain.wxf
 $K -script "$PWD/MakeReport.wl"      # regenerate results.json, preview PNG, notebook from saved WXF
 $K -script "$PWD/ImportDataset.wl"   # re-extract data/14n12345-record.json from the pinned CSV (downloads if absent)
 ```
 
-The test file is a plain sequence of `VerificationTest[...]` with `TestID`s; to run one test, evaluate the setup lines at the top of `Hyperbolic3Manifolds.wlt` plus the single `VerificationTest` in a kernel. Several tests read `outputs/structure.wxf`, `domain.wxf`, and `domain-integral.wxf`, so `Run14n12345.wl` must have been run first.
+The test file is a plain sequence of `VerificationTest[...]` with `TestID`s; to run one test, evaluate the setup lines at the top of `tests/Hyperbolic3Manifolds.wlt` plus the single `VerificationTest` in a kernel. Several tests read `outputs/structure.wxf`, `domain.wxf`, and `domain-integral.wxf`, so `Run14n12345.wl` must have been run first.
 
-SnapPy comparison (uses the local `.venv`, Python 3.12, pinned in `requirements-snappy.txt`):
+SnapPy comparison (uses the local `.venv`, Python 3.12, pinned in `tests/requirements-snappy.txt`):
 
 ```sh
-.venv/bin/python CompareSnapPy.py prepare            # needs data/knots_and_links_through_14.csv
-$K -script "$PWD/CompareSnapPy.wl"
-.venv/bin/python CompareSnapPy.py report             # -> outputs/snappy-comparison/comparison.{md,csv,json}
+.venv/bin/python tests/CompareSnapPy.py prepare          # needs data/knots_and_links_through_14.csv
+$K -script "$PWD/tests/CompareSnapPy.wl"
+.venv/bin/python tests/CompareSnapPy.py report          # -> outputs/snappy-comparison/comparison.{md,csv,json}
 ```
 
 ## Architecture
 
-`Hyperbolic3Manifolds.wl` is the single package (`Hyperbolic3Manifolds`` context); every other `.wl` file is a thin driver that `Get`s it. The public functions form a linear pipeline, each taking and returning an `Association` (or a `Failure`, via `Catch`/`Throw`; drivers wrap stages in `require[...]` which exits on non-Association):
+`src/Hyperbolic3Manifolds.wl` is the single package (`Hyperbolic3Manifolds`` context); every other `.wl` file is a thin driver that `Get`s it via `FileNameJoin[{root,"src","Hyperbolic3Manifolds.wl"}]`. The public functions form a linear pipeline, each taking and returning an `Association` (or a `Failure`, via `Catch`/`Throw`; drivers wrap stages in `require[...]` which exits on non-Association):
 
 1. `DecodeTriangulation[sig]` — classic connected isomorphism signature -> face pairings (`"FacePairings"` with `neighbor`, `vertex_permutation`, 0-based). Peripheral (meridian/longitude) decoration is not decoded.
 2. `ValidateIdealTriangulation[t]` — vertex-link Euler characteristics, cusp count, reversed edges.

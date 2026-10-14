@@ -1,4 +1,4 @@
-root=DirectoryName[$InputFileName];Get[FileNameJoin[{root,"Hyperbolic3Manifolds.wl"}]];
+root=ParentDirectory[DirectoryName[$InputFileName]];Get[FileNameJoin[{root,"src","Hyperbolic3Manifolds.wl"}]];
 r=Import[FileNameJoin[{root,"data","14n12345-record.json"}],"RawJSON"];
 s=Import[FileNameJoin[{root,"outputs","structure.wxf"}],"WXF"];
 h=SolveCompleteStructure[DecodeTriangulation[r["triangulation"]],160,65];

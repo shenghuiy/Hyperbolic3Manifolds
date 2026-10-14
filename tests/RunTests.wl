@@ -1,5 +1,5 @@
-root=DirectoryName[$InputFileName];
-report=TestReport[FileNameJoin[{root,"Hyperbolic3Manifolds.wlt"}]];
+root=ParentDirectory[DirectoryName[$InputFileName]];
+report=TestReport[FileNameJoin[{root,"tests","Hyperbolic3Manifolds.wlt"}]];
 summary=<|"Succeeded"->report["TestsSucceededCount"],"Failed"->report["TestsFailedCount"]|>;
 Export[FileNameJoin[{root,"outputs","tests.json"}],summary,"RawJSON"];
 Print[summary];

@@ -20,8 +20,8 @@ Wolfram 15.0.1 was used. From a terminal, use an absolute script path:
 
 ```sh
 /Applications/Wolfram.app/Contents/MacOS/WolframKernel -script /absolute/path/Hyperbolic3Manifolds/Run14n12345.wl
-/Applications/Wolfram.app/Contents/MacOS/WolframKernel -script /absolute/path/Hyperbolic3Manifolds/RunTests.wl
-/Applications/Wolfram.app/Contents/MacOS/WolframKernel -script /absolute/path/Hyperbolic3Manifolds/CheckPrecision.wl
+/Applications/Wolfram.app/Contents/MacOS/WolframKernel -script /absolute/path/Hyperbolic3Manifolds/tests/RunTests.wl
+/Applications/Wolfram.app/Contents/MacOS/WolframKernel -script /absolute/path/Hyperbolic3Manifolds/tests/CheckPrecision.wl
 ```
 
 Alternatively, evaluate `Get["/absolute/path/Hyperbolic3Manifolds/Run14n12345.wl"]` in a notebook. The supplied small JSON record is sufficient to run the geometry offline. `ImportDataset.wl` extracts it again from the pinned CSV, downloading the CSV if absent. The importer uses a checked parser for this unquoted row, not a general CSV parser. PNG export needs a functioning Wolfram graphics renderer; numerical computation does not require a notebook front end.
@@ -59,7 +59,7 @@ Alternatively, evaluate `Get["/absolute/path/Hyperbolic3Manifolds/Run14n12345.wl
 
 ## Additional regression: K5a1
 
-`TestK5a1.wl` runs the complete pipeline on the dataset's three-tetrahedron
+`tests/TestK5a1.wl` runs the complete pipeline on the dataset's three-tetrahedron
 `K5a1` complement, using signature `dLQcbcciirv_BacB`. All 12 numerical checks
 passed, including an independent 160-digit solve and domain integration.
 The volume is `2.82812208833078316276389880927663494277...`; the candidate
@@ -71,7 +71,7 @@ by approximately `1.17e-11`. Results and a rotatable notebook are in
 
 A local `.venv` was created using
 `/Library/Frameworks/Python.framework/Versions/3.12/bin/python3` (Python 3.12.10),
-with SnapPy 3.3.2. Installed versions are recorded in `requirements-snappy.txt`.
+with SnapPy 3.3.2. Installed versions are recorded in `tests/requirements-snappy.txt`.
 SnapPy is used only by this comparison harness; the Wolfram geometry package
 remains independent of it.
 
@@ -87,9 +87,9 @@ checks volumes; it does not construct ten Dirichlet domains or certify results.
 Reproduce from the project directory:
 
 ```sh
-.venv/bin/python CompareSnapPy.py prepare
-/Applications/Wolfram.app/Contents/MacOS/WolframKernel -script "$PWD/CompareSnapPy.wl"
-.venv/bin/python CompareSnapPy.py report
+.venv/bin/python tests/CompareSnapPy.py prepare
+/Applications/Wolfram.app/Contents/MacOS/WolframKernel -script "$PWD/tests/CompareSnapPy.wl"
+.venv/bin/python tests/CompareSnapPy.py report
 ```
 
 See `outputs/snappy-comparison/comparison.md`, `comparison.csv`, and

@@ -1,5 +1,5 @@
 root=DirectoryName[$InputFileName];
-Get[FileNameJoin[{root,"Hyperbolic3Manifolds.wl"}]];
+Get[FileNameJoin[{root,"src","Hyperbolic3Manifolds.wl"}]];
 out=FileNameJoin[{root,"outputs"}];If[!DirectoryQ[out],CreateDirectory[out]];
 require[x_]:=If[!AssociationQ[x],Print["Stage failed: ",x];Exit[1],x];
 record=require[Import[FileNameJoin[{root,"data","14n12345-record.json"}],"RawJSON"]];
