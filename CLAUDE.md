@@ -12,13 +12,13 @@ Wolfram 15.0.1. Scripts locate the repo root via `$InputFileName` (top-level dri
 
 ```sh
 K=/Applications/Wolfram.app/Contents/MacOS/WolframKernel
-$K -script "$PWD/Run14n12345.wl"     # full pipeline -> outputs/*.wxf, then runs MakeReport.wl
+$K -script "$PWD/Run14n12345.wl"     # full pipeline -> outputs/*.wxf, then runs tests/MakeReport.wl
 $K -script "$PWD/tests/RunTests.wl"        # runs tests/Hyperbolic3Manifolds.wlt, writes outputs/tests.json, exit 1 on failure
 $K -script "$PWD/tests/CheckPrecision.wl"  # re-solve at 160 digits, compare to outputs/structure.wxf
 $K -script "$PWD/tests/TestK5a1.wl"        # end-to-end regression on K5a1 -> outputs/K5a1/
 $K -script "$PWD/RefineIntegral.wl"  # re-integrate an existing outputs/domain.wxf
-$K -script "$PWD/MakeReport.wl"      # regenerate results.json, preview PNG, notebook from saved WXF
-$K -script "$PWD/ImportDataset.wl"   # re-extract data/14n12345-record.json from the pinned CSV (downloads if absent)
+$K -script "$PWD/tests/MakeReport.wl"      # regenerate results.json, preview PNG, notebook from saved WXF
+$K -script "$PWD/tests/ImportDataset.wl"   # re-extract data/14n12345-record.json from the pinned CSV (downloads if absent)
 ```
 
 The test file is a plain sequence of `VerificationTest[...]` with `TestID`s; to run one test, evaluate the setup lines at the top of `tests/Hyperbolic3Manifolds.wlt` plus the single `VerificationTest` in a kernel. Several tests read `outputs/structure.wxf`, `domain.wxf`, and `domain-integral.wxf`, so `Run14n12345.wl` must have been run first.
@@ -50,5 +50,5 @@ Artifacts are persisted between stages as WXF in `outputs/` (`structure`, `holon
 
 - Numerical thresholds used across tests/drivers: structure residuals `< 10^-40` (gradient `< 10^-45`); domain residuals `< 10^-9`; domain integral vs tetrahedral volume `< 10^-7`; SnapPy comparison tolerance `1e-30`. The dataset's rounded volume is for comparison only, never an input.
 - Scope is intentionally limited (see README "Scope and limitations"): orientable, face-paired ideal triangulations with torus cusps and a strictly positive angle structure. Unsupported input should fail explicitly, not be silently accepted. Results are numerical evidence, not interval-certified; don't describe them as proofs.
-- `ImportDataset.wl` uses a deliberately narrow parser for the one unquoted CSV row; it rejects quoted records rather than parsing general CSV.
+- `tests/ImportDataset.wl` uses a deliberately narrow parser for the one unquoted CSV row; it rejects quoted records rather than parsing general CSV.
 - Data provenance is pinned in `data/provenance.json` (dataset commit `f3eb9cdd…`, CSV SHA-256). `data/knots_and_links_through_14.csv` (32 MB), `outputs/*.log`, and `.venv/` are gitignored and regenerable.

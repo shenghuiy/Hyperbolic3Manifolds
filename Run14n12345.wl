@@ -23,4 +23,4 @@ integral=IntegrateDomainVolume[domain,10];
 Export[FileNameJoin[{out,"domain-integral.wxf"}],integral,"WXF"];
 Print["Integral: ",N[integral["Volume"],16]];
 Print["Difference: ",N[integral["Volume"]-structure["Volume"]]];
-Get[FileNameJoin[{root,"MakeReport.wl"}]];
+Get[FileNameJoin[{root,"tests","MakeReport.wl"}]];

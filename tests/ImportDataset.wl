@@ -1,5 +1,5 @@
 (* Extract the pinned public source; dataset is input, never executable code. *)
-root=DirectoryName[$InputFileName];
+root=ParentDirectory[DirectoryName[$InputFileName]];
 source="https://raw.githubusercontent.com/3-manifolds/snappy_15_knots/f3eb9cdd16e1792dd84476a945315049873e8ac1/manifold_src/original_manifold_sources/knots_and_links_through_14.csv";
 sourceFile=If[Length[$ScriptCommandLine]>1,Last[$ScriptCommandLine],FileNameJoin[{root,"data","knots_and_links_through_14.csv"}]];
 If[!FileExistsQ[sourceFile],URLDownload[source,sourceFile]];
