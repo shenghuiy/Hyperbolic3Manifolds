@@ -83,10 +83,9 @@ i["Volume"] - s["Volume"]                        (* ~3.6*10^-9; domain geometry 
 DomainGraphics[d, "Poincare"]
 ```
 
-To run the full K14n12345 computation and its tests from a terminal (the scripts must be given absolute paths):
+To run the full K14n12345 computation and all test suites from a terminal (the script must be given an absolute path):
 
 ```sh
-/Applications/Wolfram.app/Contents/MacOS/WolframKernel -script "$PWD/Run14n12345.wl"
 /Applications/Wolfram.app/Contents/MacOS/WolframKernel -script "$PWD/tests/RunTests.wl"
 ```
 
@@ -113,9 +112,9 @@ domain     d   (Klein-model polyhedron, face pairings, checks)
         └─► DomainGraphics          (Poincaré / Klein rendering)
 ```
 
-Every stage takes and returns an `Association`. The stages that can fail return a `Failure[tag, details]` instead (see [failure tags](#46-failure-tags)), so check with `AssociationQ` or `FailureQ` before continuing. The driver scripts wrap each stage in a `require[...]` helper that exits with status 1 on failure.
+Every stage takes and returns an `Association`. The stages that can fail return a `Failure[tag, details]` instead (see [failure tags](#46-failure-tags)), so check with `AssociationQ` or `FailureQ` before continuing. The test suites check `AssociationQ` before each stage, so a failure shows up as failed tests.
 
-The drivers save intermediate results as WXF files in `outputs/` (`structure.wxf`, `holonomy.wxf`, `domain.wxf`, `domain-integral.wxf`). Later scripts reload these files instead of recomputing.
+The `Run14n12345.wlt` suite saves intermediate results as WXF files in `outputs/` (`structure.wxf`, `holonomy.wxf`, `domain.wxf`, `domain-integral.wxf`). Later scripts reload these files instead of recomputing.
 
 ---
 
@@ -288,7 +287,7 @@ The input is record 44846 (CSV line 44847) of the pinned [`snappy_15_knots`](htt
 | Dirichlet domain | 161 vertices, 243 edges, 84 faces, 1 ideal vertex |
 | Domain integral | `18.3653611015266` (difference ~$8.4\times10^{-11}$) |
 | 160-digit re-solve | agrees to 60 decimal places |
-| Tests | 16/16 pass (`outputs/tests.json`) |
+| Tests | 38/38 pass across five suites (`outputs/tests.json`) |
 
 Results: `outputs/results.json`, `outputs/14n12345-Wolfram.nb` (rotatable Poincaré and Klein views), and `outputs/domain-preview.png`.
 

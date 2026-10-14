@@ -66902,13 +66902,12 @@ or fundamental-domain proof\\\"\""}, {"\"Kernel\"",
       GridBoxFrame -> {"Columns" -> {{True}}, "Rows" -> {{True}}}, 
       GridBoxItemSize -> {"Columns" -> {{Automatic}}, 
         "Rows" -> {{Automatic}}}], "Grid"]], "Output"], 
-  Cell["Recompute", "Section"], 
-  Cell[
-   "Evaluate the following cell with this notebook in the outputs directory."\
-, "Text"], Cell[BoxData[RowBox[{"Get", "[", 
+  Cell["Recompute", "Section"], Cell["Evaluate the following cell with this \
+notebook in the outputs directory. It reruns the full pipeline test suite.", 
+   "Text"], Cell[BoxData[RowBox[{"TestReport", "[", 
       RowBox[{"FileNameJoin", "[", RowBox[
          {"{", RowBox[{RowBox[{"ParentDirectory", "[", RowBox[{
-                "NotebookDirectory", "[", "]"}], "]"}], ",", 
-            "\"Run14n12345.wl\""}], "}"}], "]"}], "]"}]], "Input"]}, 
+                "NotebookDirectory", "[", "]"}], "]"}], ",", "\"tests\"", 
+            ",", "\"Run14n12345.wlt\""}], "}"}], "]"}], "]"}]], "Input"]}, 
  WindowTitle -> "K14n12345 \[LongDash] Wolfram", 
  StyleDefinitions -> "Default.nb"]

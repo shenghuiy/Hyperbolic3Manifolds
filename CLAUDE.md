@@ -8,20 +8,27 @@ A Wolfram Language implementation that computes the complete hyperbolic structur
 
 ## Commands
 
-Wolfram 15.0.1. Scripts locate the repo root via `$InputFileName` (top-level drivers use their own directory; scripts in `tests/` use its parent), so they **must be run with an absolute script path**. Layout: `src/` holds the package, `tests/` holds the test suite and validation scripts, top-level `.wl` files are drivers.
+Wolfram 15.0.1. Scripts locate the repo root via `$InputFileName` (everything in `tests/` uses the parent of its own directory), so they **must be run with an absolute script path**. Layout: `src/` holds the package, `tests/` holds the test suite and validation scripts, there are no top-level drivers; `tests/RunTests.wl` is the entry point.
 
 ```sh
 K=/Applications/Wolfram.app/Contents/MacOS/WolframKernel
-$K -script "$PWD/Run14n12345.wl"     # full pipeline -> outputs/*.wxf, then runs tests/MakeReport.wl
-$K -script "$PWD/tests/RunTests.wl"        # runs tests/Hyperbolic3Manifolds.wlt, writes outputs/tests.json, exit 1 on failure
+$K -script "$PWD/tests/RunTests.wl"                       # all suites in dependency order, writes outputs/tests.json, exit 1 on failure
+$K -script "$PWD/tests/RunTests.wl" Hyperbolic3Manifolds  # run only the named suite(s)
 $K -script "$PWD/tests/CheckPrecision.wl"  # re-solve at 160 digits, compare to outputs/structure.wxf
 $K -script "$PWD/tests/TestK5a1.wl"        # end-to-end regression on K5a1 -> outputs/K5a1/
-$K -script "$PWD/RefineIntegral.wl"  # re-integrate an existing outputs/domain.wxf
-$K -script "$PWD/tests/MakeReport.wl"      # regenerate results.json, preview PNG, notebook from saved WXF
-$K -script "$PWD/tests/ImportDataset.wl"   # re-extract data/14n12345-record.json from the pinned CSV (downloads if absent)
 ```
 
-The test file is a plain sequence of `VerificationTest[...]` with `TestID`s; to run one test, evaluate the setup lines at the top of `tests/Hyperbolic3Manifolds.wlt` plus the single `VerificationTest` in a kernel. Several tests read `outputs/structure.wxf`, `domain.wxf`, and `domain-integral.wxf`, so `Run14n12345.wl` must have been run first.
+Suites (`tests/*.wlt`, run by `RunTests.wl` in this order):
+
+- `ImportDataset` — re-extracts the K14n12345 row from the pinned CSV and checks it equals `data/14n12345-record.json` and the provenance SHA-256. Skipped when `data/knots_and_links_through_14.csv` is absent.
+- `Run14n12345` — full pipeline; writes `outputs/face-pairings.json` and `outputs/{structure,holonomy,domain,domain-integral}.wxf`.
+- `RefineIntegral` — re-integrates the saved domain and compares with the saved integral.
+- `MakeReport` — writes `outputs/results.json`, `outputs/14n12345-Wolfram.nb`, `outputs/domain-preview.png`.
+- `Hyperbolic3Manifolds` — unit/regression checks on the saved artifacts plus the figure-eight volume.
+
+The later suites read files the `Run14n12345` suite writes, so run it first (`RunTests.wl` does). Inside a `.wlt`, never `Exit`; guard each stage with `If[AssociationQ[prev], ..., $Failed]` so a failure is reported as failed tests instead of killing `TestReport`.
+
+Each `.wlt` is a plain sequence of setup lines and `VerificationTest[...]` with `TestID`s; to run one test, evaluate the setup lines at the top of its file plus the single `VerificationTest` in a kernel.
 
 SnapPy comparison (uses the local `.venv`, Python 3.12, pinned in `tests/requirements-snappy.txt`):
 
@@ -33,7 +40,7 @@ $K -script "$PWD/tests/CompareSnapPy.wl"
 
 ## Architecture
 
-`src/Hyperbolic3Manifolds.wl` is the single package (`Hyperbolic3Manifolds`` context); every other `.wl` file is a thin driver that `Get`s it via `FileNameJoin[{root,"src","Hyperbolic3Manifolds.wl"}]`. The public functions form a linear pipeline, each taking and returning an `Association` (or a `Failure`, via `Catch`/`Throw`; drivers wrap stages in `require[...]` which exits on non-Association):
+`src/Hyperbolic3Manifolds.wl` is the single package (`Hyperbolic3Manifolds`` context); every test file `Get`s it via `FileNameJoin[{root,"src","Hyperbolic3Manifolds.wl"}]`. The public functions form a linear pipeline, each taking and returning an `Association` (or a `Failure`, via `Catch`/`Throw`; test suites check `AssociationQ` before each stage):
 
 1. `DecodeTriangulation[sig]` — classic connected isomorphism signature -> face pairings (`"FacePairings"` with `neighbor`, `vertex_permutation`, 0-based). Peripheral (meridian/longitude) decoration is not decoded.
 2. `ValidateIdealTriangulation[t]` — vertex-link Euler characteristics, cusp count, reversed edges.
@@ -44,11 +51,11 @@ $K -script "$PWD/tests/CompareSnapPy.wl"
 7. `IntegrateDomainVolume[d, goal]` — independent volume via divergence theorem on domain faces.
 8. `DomainGraphics[d, "Poincare"|"Klein"]`.
 
-Artifacts are persisted between stages as WXF in `outputs/` (`structure`, `holonomy`, `domain`, `domain-integral`), so later scripts (`MakeReport`, `RefineIntegral`, `CheckPrecision`, tests) reload rather than recompute.
+Artifacts are persisted between stages as WXF in `outputs/` (`structure`, `holonomy`, `domain`, `domain-integral`), so later suites and scripts (`MakeReport`, `RefineIntegral`, `CheckPrecision`, `Hyperbolic3Manifolds`) reload rather than recompute.
 
 ## Conventions and constraints
 
 - Numerical thresholds used across tests/drivers: structure residuals `< 10^-40` (gradient `< 10^-45`); domain residuals `< 10^-9`; domain integral vs tetrahedral volume `< 10^-7`; SnapPy comparison tolerance `1e-30`. The dataset's rounded volume is for comparison only, never an input.
 - Scope is intentionally limited (see README "Scope and limitations"): orientable, face-paired ideal triangulations with torus cusps and a strictly positive angle structure. Unsupported input should fail explicitly, not be silently accepted. Results are numerical evidence, not interval-certified; don't describe them as proofs.
-- `tests/ImportDataset.wl` uses a deliberately narrow parser for the one unquoted CSV row; it rejects quoted records rather than parsing general CSV.
+- `tests/ImportDataset.wlt` uses a deliberately narrow parser for the one unquoted CSV row; it rejects quoted records rather than parsing general CSV.
 - Data provenance is pinned in `data/provenance.json` (dataset commit `f3eb9cdd…`, CSV SHA-256). `data/knots_and_links_through_14.csv` (32 MB), `outputs/*.log`, and `.venv/` are gitignored and regenerable.

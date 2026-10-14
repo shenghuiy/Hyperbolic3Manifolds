@@ -1,4 +1,26 @@
 {
-	"Succeeded":16,
-	"Failed":0
+	"Succeeded":38,
+	"Failed":0,
+	"Suites":{
+		"ImportDataset":{
+			"Succeeded":7,
+			"Failed":0
+		},
+		"Run14n12345":{
+			"Succeeded":8,
+			"Failed":0
+		},
+		"RefineIntegral":{
+			"Succeeded":3,
+			"Failed":0
+		},
+		"MakeReport":{
+			"Succeeded":4,
+			"Failed":0
+		},
+		"Hyperbolic3Manifolds":{
+			"Succeeded":16,
+			"Failed":0
+		}
+	}
 }

@@ -13,4 +13,4 @@ Get the CSV from the pinned commit `f3eb9cdd16e1792dd84476a945315049873e8ac1`:
 
 Save it here as `data/knots_and_links_through_14.csv`. Its SHA-256 should be
 `a210bc6866a22c8d3aa533a0804d650ffb68659f83ac5dcdb3ef3e57bef59464`.
-`tests/ImportDataset.wl` downloads it automatically if it is missing.
+`tests/ImportDataset.wlt` downloads it automatically if it is missing.
