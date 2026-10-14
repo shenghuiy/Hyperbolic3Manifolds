@@ -26,6 +26,22 @@ Wolfram 15.0.1 was used. From a terminal, use an absolute script path:
 
 Alternatively, evaluate `Get["/absolute/path/Hyperbolic3Manifolds/Run14n12345.wl"]` in a notebook. The supplied small JSON record is sufficient to run the geometry offline. `ImportDataset.wl` extracts it again from the pinned CSV, downloading the CSV if absent. The importer uses a checked parser for this unquoted row, not a general CSV parser. PNG export needs a functioning Wolfram graphics renderer; numerical computation does not require a notebook front end.
 
+## Dataset
+
+The full knot database (`knots_and_links_through_14.csv`, 32 MB) is **not stored in this repository**. It comes from the [`3-manifolds/snappy_15_knots`](https://github.com/3-manifolds/snappy_15_knots) repository, pinned to commit `f3eb9cdd16e1792dd84476a945315049873e8ac1`:
+
+- [View the CSV on GitHub](https://github.com/3-manifolds/snappy_15_knots/blob/f3eb9cdd16e1792dd84476a945315049873e8ac1/manifold_src/original_manifold_sources/knots_and_links_through_14.csv)
+- [Direct download (raw)](https://raw.githubusercontent.com/3-manifolds/snappy_15_knots/f3eb9cdd16e1792dd84476a945315049873e8ac1/manifold_src/original_manifold_sources/knots_and_links_through_14.csv)
+
+SHA-256: `a210bc6866a22c8d3aa533a0804d650ffb68659f83ac5dcdb3ef3e57bef59464` (also recorded in `data/provenance.json`).
+
+The main computation does not need it: the K14n12345 record is already saved in `data/14n12345-record.json`. You need the CSV only to re-extract that record (`ImportDataset.wl` downloads it automatically) or to run the SnapPy comparison (`tests/CompareSnapPy.py prepare`). To fetch it manually:
+
+```sh
+curl -L -o data/knots_and_links_through_14.csv https://raw.githubusercontent.com/3-manifolds/snappy_15_knots/f3eb9cdd16e1792dd84476a945315049873e8ac1/manifold_src/original_manifold_sources/knots_and_links_through_14.csv
+shasum -a 256 data/knots_and_links_through_14.csv
+```
+
 ## Mathematical pipeline
 
 1. **Decode the isomorphism signature.** Read base-64 integers, facet actions, destination tetrahedra, and vertex permutations. Reconstruct reciprocal face identifications and orient the tetrahedra. Peripheral decoration is retained but not decoded; no meridian/longitude calculation is claimed.
