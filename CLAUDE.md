@@ -57,6 +57,7 @@ Artifacts are persisted between stages as WXF in `outputs/` (`structure`, `holon
 
 ## Conventions and constraints
 
+- **One branch per fix.** Changes to `src/` or `tests/` go on their own branch off `main`, named `fix/<short-name>` (or `feat/<short-name>` for new functionality): `git switch -c fix/<short-name>`. Push the branch and open a PR; don't merge into `main` without the user's OK. A PreToolUse hook (`.claude/hooks/require-branch.sh`) denies editing `src/`/`tests/` files on `main` and denies `git commit` on `main` while `src/`/`tests/` have uncommitted changes. Docs-only changes may still go straight to `main`.
 - Numerical thresholds used across tests/drivers: structure residuals `< 10^-40` (gradient `< 10^-45`); domain residuals `< 10^-9`; domain integral vs tetrahedral volume `< 10^-7`; SnapPy comparison tolerance `1e-30`. The dataset's rounded volume is for comparison only, never an input.
 - Scope is intentionally limited (see README "Scope and limitations"): orientable, face-paired ideal triangulations with torus cusps and a strictly positive angle structure. Unsupported input should fail explicitly, not be silently accepted. Results are numerical evidence, not interval-certified; don't describe them as proofs.
 - `tests/ImportDataset.wlt` uses a deliberately narrow parser for the one unquoted CSV row; it rejects quoted records rather than parsing general CSV.
