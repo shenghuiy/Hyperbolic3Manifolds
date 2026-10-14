@@ -1,0 +1,6 @@
+# Regenerable full public database and runtime logs
+data/knots_and_links_through_14.csv
+outputs/*.log
+.venv/
+__pycache__/
+.DS_Store

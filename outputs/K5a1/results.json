@@ -1,0 +1,31 @@
+{
+	"Manifold":"K5a1",
+	"Volume":"2.82812208833078316276389880927663494277098131730064947704352032725880254832247`50.",
+	"DomainVEF":[
+		45,
+		69,
+		26
+	],
+	"IdealVertices":1,
+	"ComplexEdgeResidual":"4.039408041839990700606360046645927941048135660984601360061464987238794784425317014`66.19358302471815*^-53",
+	"FacePairingResidual":2.0244453367912996e-15,
+	"EdgeAngleResidual":1.7763568394002505e-15,
+	"DomainIntegral":2.8281220883424374,
+	"IntegralDifference":1.1654149510193454e-11,
+	"Checks":{
+		"ThreeTetrahedra":true,
+		"OneTorusCusp":true,
+		"PositiveAngles":true,
+		"AngleEquations":true,
+		"Stationarity":true,
+		"ComplexGluing":true,
+		"VolumeFormulas":true,
+		"PrecisionStability60Digits":true,
+		"DatasetAgreement":true,
+		"FacePairing":true,
+		"EdgeAngles":true,
+		"IndependentDomainIntegral":true
+	},
+	"AllPassed":true,
+	"Certification":"Numerical checks only"
+}

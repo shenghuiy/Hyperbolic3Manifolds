@@ -1,0 +1,98 @@
+{
+  "python": "3.12.10 (v3.12.10:0cc81280367, Apr  8 2025, 08:46:59) [Clang 13.0.0 (clang-1300.0.29.30)]",
+  "executable": "/Users/shenghuiyang/Developer/LowDimTopology/.venv/bin/python",
+  "snappy": "3.3.2",
+  "platform": "macOS-27.0.1-arm64-arm-64bit",
+  "results": [
+    {
+      "name": "K4a1",
+      "volume": "2.029883212819307250042405108549040571883378615060599584034978214",
+      "ordinary_volume": "2.0298832128",
+      "named_volume": "2.029883212819307250042405108549040571883378615060599584034978214",
+      "solution_type": "all tetrahedra positively oriented",
+      "tetrahedra": 2,
+      "cusps": 1
+    },
+    {
+      "name": "K5a1",
+      "volume": "2.828122088330783162763898809276634942770981317300649477043520327",
+      "ordinary_volume": "2.82812208833",
+      "named_volume": "2.828122088330783162763898809276634942770981317300649477043520327",
+      "solution_type": "all tetrahedra positively oriented",
+      "tetrahedra": 3,
+      "cusps": 1
+    },
+    {
+      "name": "K6a1",
+      "volume": "5.693021091281300765112483277481222926944301733006880037850870700",
+      "ordinary_volume": "5.69302109128",
+      "named_volume": "5.693021091281300765112483277481222926944301733006880037850870700",
+      "solution_type": "all tetrahedra positively oriented",
+      "tetrahedra": 6,
+      "cusps": 1
+    },
+    {
+      "name": "K7a1",
+      "volume": "7.643375172359955478221844448580771033642604991008608123921250359",
+      "ordinary_volume": "7.6433751724",
+      "named_volume": "7.643375172359955478221844448580771033642604991008608123921250359",
+      "solution_type": "all tetrahedra positively oriented",
+      "tetrahedra": 8,
+      "cusps": 1
+    },
+    {
+      "name": "K8a1",
+      "volume": "9.217800316021928668826315392572382719713716730305618878551082624",
+      "ordinary_volume": "9.2178003160",
+      "named_volume": "9.217800316021928668826315392572382719713716730305618878551082624",
+      "solution_type": "all tetrahedra positively oriented",
+      "tetrahedra": 10,
+      "cusps": 1
+    },
+    {
+      "name": "K9a1",
+      "volume": "11.954526968232033724377719654362190119413107229626729523969210647",
+      "ordinary_volume": "11.9545269682",
+      "named_volume": "11.954526968232033724377719654362190119413107229626729523969210647",
+      "solution_type": "all tetrahedra positively oriented",
+      "tetrahedra": 13,
+      "cusps": 1
+    },
+    {
+      "name": "K10a1",
+      "volume": "13.980041535708046669670872848527724415626634736610407618580720663",
+      "ordinary_volume": "13.9800415357",
+      "named_volume": "13.980041535708046669670872848527724415626634736610407618580720663",
+      "solution_type": "all tetrahedra positively oriented",
+      "tetrahedra": 15,
+      "cusps": 1
+    },
+    {
+      "name": "K11n1",
+      "volume": "9.700477476413561264672259798267717540374916353046098153602794009",
+      "ordinary_volume": "9.7004774764",
+      "named_volume": "9.700477476413561264672259798267717540374916353046098153602794009",
+      "solution_type": "all tetrahedra positively oriented",
+      "tetrahedra": 11,
+      "cusps": 1
+    },
+    {
+      "name": "K12n1",
+      "volume": "14.082543874268638333836898639207383977514225752109477615853112133",
+      "ordinary_volume": "14.0825438743",
+      "named_volume": "14.082543874268638333836898639207383977514225752109477615853112133",
+      "solution_type": "all tetrahedra positively oriented",
+      "tetrahedra": 15,
+      "cusps": 1
+    },
+    {
+      "name": "K14n12345",
+      "volume": "18.365361101610475343406449543135932244362357572554413389771507513",
+      "ordinary_volume": "18.3653611016",
+      "named_volume": "18.365361101610475343406449543135932244362357572554413389771507513",
+      "solution_type": "all tetrahedra positively oriented",
+      "tetrahedra": 20,
+      "cusps": 1
+    }
+  ]
+}
