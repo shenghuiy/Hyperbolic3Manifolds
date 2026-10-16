@@ -1,5 +1,6 @@
 root=ParentDirectory[DirectoryName[$InputFileName]];
 Get[FileNameJoin[{root,"src","Hyperbolic3Manifolds.wl"}]];
+Get[FileNameJoin[{root,"src","DTCrossingTable.wl"}]];
 record=Import[FileNameJoin[{root,"data","14n12345-record.json"}],"RawJSON"];
 tri=DecodeTriangulation[record["triangulation"]];
 VerificationTest[tri["Tetrahedra"],20,TestID->"Dataset tetrahedron count"]
@@ -29,3 +30,10 @@ VerificationTest[Abs[integral["Volume"]-structure["Volume"]]<10^-7,True,TestID->
 figureEight=SolveCompleteStructure[DecodeTriangulation["cPcbbbiht"],80,25];
 VerificationTest[AssociationQ[figureEight]&&Abs[figureEight["Volume"]-2 Im[PolyLog[2,Exp[I Pi/3]]]]<10^-24,True,
  TestID->"Figure-eight exact volume regression"]
+(* K15n4321 DT code from SnapPy; crossing (1,4) has the even visit under and (19,6),(7,18) have it over. *)
+dt15={4,8,10,-18,2,24,26,28,22,-6,16,20,30,14,12};
+dtTable=DTCrossingTable[dt15];
+VerificationTest[{dtTable["Crossings"],Length[dtTable["Table"]],Sort[Join@@Lookup[dtTable["Table"],{"OddVisit","EvenVisit"}]]},
+ {15,15,Range[30]},TestID->"DT code visits each of 30 labels once"]
+VerificationTest[Lookup[Select[dtTable["Table"],#["Over"]=="Even"&],"EvenVisit"],{18,6},TestID->"DT code over-strand signs"]
+VerificationTest[And@@(FailureQ[DTCrossingTable[#]]& /@ {{},{4,6,2,8,8},{3,6,2},{4,2,2}}),True,TestID->"Malformed DT codes fail"]
