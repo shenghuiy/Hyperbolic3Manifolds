@@ -11,84 +11,87 @@ IntegrateDomainVolume::usage="IntegrateDomainVolume[d,goal] integrates hyperboli
 DomainGraphics::usage="DomainGraphics[d,model] draws a domain in the Poincare or Klein ball.";
 Begin["`Private`"];
 assert[c_,tag_,details_:<||>]:=If[!TrueQ[c],Throw[Failure[tag,details]]];
+(* {tetrahedron, neighbor, vertex_permutation, face} for every face pairing *)
+gluings[fp_]:=Lookup[fp,{"tetrahedron","neighbor","vertex_permutation","face"}];
+(* Graph on cells glued across faces: cells[f] lists the cells of face f, id[j,c] numbers cell c of tetrahedron j *)
+gluingGraph[size_,fp_,id_,cells_]:=Graph[Range[size],Catenate[
+ Function[{j,k,p,f},UndirectedEdge[id[j,#],id[k,p[[#+1]]]]& /@ cells[f]]@@@gluings[fp]]];
+componentLabels[comps_]:=Association[Catenate[MapIndexed[Thread[#1->First[#2]]&,comps]]];
+cyclicPairs[l_]:=Partition[l,2,1,1];
+nontrivialQ[g_,tol_]:=Norm[g-Tr[g]/2 IdentityMatrix[2]]>tol;
 DecodeTriangulation[s_String]:=Catch@Module[
- {parts,codes,alphabet,n,width=1,pos=2,readInt,actions={},used=0,block,m,dests,perms,
- table,next=1,ai=1,ji=1,j,p,kind,records,ori},
- parts=StringSplit[s,"_"];alphabet=Characters["abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-"];
+ {parts=StringSplit[s,"_"],codes,read,n,width,pos,addAction,actions,used,m,dests,perms,
+ glue,table,ai,next,ji,records,orient},
  assert[Length[parts]>0,"EmptySignature"];
- assert[And@@(MemberQ[alphabet,#]& /@ Characters[First[parts]]),"InvalidAlphabet"];
- codes=(First[FirstPosition[alphabet,#]]-1& /@ Characters[First[parts]]);
- n=First[codes];
- readInt[w_]:=Module[{v},assert[w>0&&pos+w-1<=Length[codes],"TruncatedSignature"];
- v=codes[[pos;;pos+w-1]].(64^Range[0,w-1]);pos+=w;v];
- If[n==63,width=readInt[1];n=readInt[width]];
+ codes=Lookup[AssociationThread[Characters[
+  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-"],Range[0,63]],Characters[First[parts]]];
+ assert[FreeQ[codes,_Missing],"InvalidAlphabet"];
+ read[p_,w_]:=(assert[w>0&&p+w-1<=Length[codes],"TruncatedSignature"];FromDigits[Reverse[codes[[p;;p+w-1]]],64]);
+ {n,width,pos}=If[First[codes]==63,With[{w=read[2,1]},{read[3,w],w,3+w}],{First[codes],1,2}];
  assert[n>0&&IntegerQ[n],"EmptyTriangulation"];
- While[used<4 n,block=Reverse[IntegerDigits[readInt[1],4,3]];
- Do[If[used<4 n,assert[a<=2,"InvalidFacetAction"];AppendTo[actions,a];used+=If[a==0,1,2],
- assert[a==0,"InvalidPadding"]],{a,block}]];
+ (* each character packs three base-4 facet actions; actions past 4n faces are padding *)
+ addAction[{acts_,u_},a_]:=If[u<4 n,assert[a<=2,"InvalidFacetAction"];{Append[acts,a],u+If[a==0,1,2]},
+  assert[a==0,"InvalidPadding"];{acts,u}];
+ {actions,used,pos}=NestWhile[Append[Fold[addAction,Most[#],Reverse[IntegerDigits[read[Last[#],1],4,3]]],Last[#]+1]&,
+  {{},0,pos},#[[2]]<4 n&];
  assert[used==4 n,"FacetCountMismatch"];
  assert[FreeQ[actions,0],"BoundaryFacesUnsupported"];
- m=Count[actions,2];dests=Table[readInt[width],{m}];
- perms=Table[readInt[1],{m}];assert[pos==Length[codes]+1,"TrailingSignatureData"];
- assert[And@@(0<=#<n& /@ dests)&&And@@(0<=#<24& /@ perms),"InvalidGluingIndex"];
+ m=Count[actions,2];
+ dests=read[pos+width (#-1),width]& /@ Range[m];perms=read[pos+width m+#-1,1]& /@ Range[m];
+ assert[pos+(width+1) m==Length[codes]+1,"TrailingSignatureData"];
+ assert[AllTrue[dests,0<=#<n&]&&AllTrue[perms,0<=#<24&],"InvalidGluingIndex"];
  perms=Sort[Permutations[Range[0,3]]][[perms+1]];
- table=ConstantArray[Null,{n,4}];
- Do[If[table[[t+1,f+1]]===Null,
- assert[ai<=Length[actions],"MissingFacetAction"];kind=actions[[ai++]];
- If[kind==1,j=next++;p=Range[0,3],assert[ji<=m,"MissingJoin"];j=dests[[ji]];p=perms[[ji++]]];
- assert[0<=j<n,"InvalidDestination"];
- assert[table[[j+1,p[[f+1]]+1]]===Null,"InvalidFacePair"];
- assert[!(j==t&&p[[f+1]]==f),"SelfPairedFace"];
- table[[t+1,f+1]]={j,p};table[[j+1,p[[f+1]]+1]]={t,Ordering[p]-1}],
- {t,0,n-1},{f,0,3}];
+ (* state: {gluing table, next action, next new tetrahedron, next join} *)
+ glue[{tab_,a_,nx_,jn_},{t_,f_}]:=If[tab[[t+1,f+1]]=!=Null,{tab,a,nx,jn},
+  assert[a<=Length[actions],"MissingFacetAction"];
+  With[{fresh=actions[[a]]==1},If[!fresh,assert[jn<=m,"MissingJoin"]];
+  With[{j=If[fresh,nx,dests[[jn]]],p=If[fresh,Range[0,3],perms[[jn]]]},
+  assert[0<=j<n,"InvalidDestination"];
+  assert[tab[[j+1,p[[f+1]]+1]]===Null,"InvalidFacePair"];
+  assert[!(j==t&&p[[f+1]]==f),"SelfPairedFace"];
+  {ReplacePart[tab,{{t+1,f+1}->{j,p},{j+1,p[[f+1]]+1}->{t,Ordering[p]-1}}],a+1,nx+Boole[fresh],jn+Boole[!fresh]}]]];
+ {table,ai,next,ji}=Fold[glue,{ConstantArray[Null,{n,4}],1,1,1},Tuples[{Range[0,n-1],Range[0,3]}]];
  assert[next==n&&ai==Length[actions]+1&&ji==m+1,"DisconnectedOrMalformed"];
- records=Flatten[Table[<|"tetrahedron"->t,"face"->f,"neighbor"->table[[t+1,f+1,1]],
- "vertex_permutation"->table[[t+1,f+1,2]]|>,{t,0,n-1},{f,0,3}],1];
- ori=ConstantArray[0,n];ori[[1]]=1;
- Do[Do[If[ori[[r["tetrahedron"]+1]]!=0,
- j=r["neighbor"]+1;p=-Signature[r["vertex_permutation"]] ori[[r["tetrahedron"]+1]];
- assert[ori[[j]]==0||ori[[j]]==p,"NonOrientableTriangulation"];ori[[j]]=p],{r,records}],{n}];
- <|"Signature"->s,"Tetrahedra"->n,"FacePairings"->records,"Orientations"->ori,
- "PeripheralDecoration"->If[Length[parts]>1,parts[[2]],None]|>
+ records=Flatten[Table[<|"tetrahedron"->t-1,"face"->f-1,"neighbor"->table[[t,f,1]],
+  "vertex_permutation"->table[[t,f,2]]|>,{t,n},{f,4}],1];
+ orient[o_,{j_,k_,p_,_}]:=If[o[[j+1]]==0,o,With[{sgn=-Signature[p] o[[j+1]]},
+  assert[o[[k+1]]==0||o[[k+1]]==sgn,"NonOrientableTriangulation"];ReplacePart[o,k+1->sgn]]];
+ <|"Signature"->s,"Tetrahedra"->n,"FacePairings"->records,
+  "Orientations"->FixedPoint[Fold[orient,#,gluings[records]]&,UnitVector[n,1]],
+  "PeripheralDecoration"->If[Length[parts]>1,parts[[2]],None]|>
 ];
 ValidateIdealTriangulation[t_Association]:=Catch@Module[
- {n=t["Tetrahedra"],fp=t["FacePairings"],pairs,vid,eid,cg,eg,sg,cusps,corners,sides,labels,chi},
- pairs=Select[Tuples[Range[0,3],2],Unequal@@#&];
+ {n=t["Tetrahedra"],fp=t["FacePairings"],pairs,index,vid,eid,cusps,corners,sides,labels,cuspOf,perCusp,chi},
+ pairs=Select[Tuples[Range[0,3],2],Unequal@@#&];index=First /@ PositionIndex[pairs];
  vid[j_,v_]:=4 j+v+1;
- eid[j_,v_,u_]:=12 j+First[FirstPosition[pairs,{v,u}]];
- cg=Graph[Range[4 n],Flatten[Table[With[{j=r["tetrahedron"],k=r["neighbor"],p=r["vertex_permutation"],f=r["face"]},
- Table[UndirectedEdge[vid[j,v],vid[k,p[[v+1]]]],{v,DeleteCases[Range[0,3],f]}]],{r,fp}]]];
- eg=Graph[Range[12 n],Flatten[Table[With[{j=r["tetrahedron"],k=r["neighbor"],p=r["vertex_permutation"],f=r["face"]},
- Table[UndirectedEdge[eid[j,a[[1]],a[[2]]],eid[k,p[[a[[1]]+1]],p[[a[[2]]+1]]]],{a,Select[pairs,FreeQ[#,f]&]}]],{r,fp}]]];
- sg=Graph[Range[12 n],Flatten[Table[With[{j=r["tetrahedron"],k=r["neighbor"],p=r["vertex_permutation"],f=r["face"]},
- Table[UndirectedEdge[eid[j,v,f],eid[k,p[[v+1]],p[[f+1]]]],{v,DeleteCases[Range[0,3],f]}]],{r,fp}]]];
- cusps=ConnectedComponents[cg];corners=ConnectedComponents[eg];sides=ConnectedComponents[sg];
- labels=Association[Flatten[MapIndexed[Thread[#1->First[#2]]&,corners]]];
- assert[And@@Flatten[Table[labels[eid[j,a[[1]],a[[2]]]]!=labels[eid[j,a[[2]],a[[1]]]],{j,0,n-1},{a,pairs}]],"ReversedEdge"];
- chi=Table[Count[corners,c_/;MemberQ[cusp,vid[Quotient[First[c]-1,12],pairs[[Mod[First[c]-1,12]+1,1]]]]] -
- Count[sides,c_/;MemberQ[cusp,vid[Quotient[First[c]-1,12],pairs[[Mod[First[c]-1,12]+1,1]]]]] + Length[cusp],{cusp,cusps}];
- assert[And@@(#==0& /@ chi),"NonTorusVertexLinks",<|"EulerCharacteristics"->chi|>];
+ eid[j_,e_]:=12 j+index[e];
+ cusps=ConnectedComponents[gluingGraph[4 n,fp,vid,DeleteCases[Range[0,3],#]&]];
+ corners=ConnectedComponents[gluingGraph[12 n,fp,eid,Select[pairs,FreeQ[#]]&]];
+ sides=ConnectedComponents[gluingGraph[12 n,fp,eid,Function[f,{#,f}& /@ DeleteCases[Range[0,3],f]]]];
+ labels=componentLabels[corners];
+ assert[AllTrue[Tuples[{Range[0,n-1],pairs}],labels[eid@@#]!=labels[eid[#[[1]],Reverse[#[[2]]]]]&],"ReversedEdge"];
+ (* number of corner (or side) classes per cusp, located by the ideal vertex of a representative *)
+ cuspOf=componentLabels[cusps];
+ perCusp[comps_]:=Lookup[Counts[cuspOf[vid[Quotient[First[#]-1,12],pairs[[Mod[First[#]-1,12]+1,1]]]]& /@ comps],
+  Range[Length[cusps]],0];
+ chi=perCusp[corners]-perCusp[sides]+Length /@ cusps;
+ assert[AllTrue[chi,#==0&],"NonTorusVertexLinks",<|"EulerCharacteristics"->chi|>];
  <|"Cusps"->Length[cusps],"VertexLinkEulerCharacteristics"->chi,"ReversedEdges"->False|>
 ];
-AngleSystem[t_Association]:=Module[{n=t["Tetrahedra"],edges,edgeID,graph,classes,typ,ae,at,a,b},
- edges=Subsets[Range[0,3],{2}];
- edgeID[j_,e_]:=6 j+First[FirstPosition[edges,Sort[e]]];
- graph=Graph[Range[6 n],Flatten[Table[With[{j=r["tetrahedron"],k=r["neighbor"],
- p=r["vertex_permutation"],f=r["face"]},
- UndirectedEdge[edgeID[j,#],edgeID[k,p[[#+1]]]]& /@
- Subsets[DeleteCases[Range[0,3],f],{2}]],{r,t["FacePairings"]}]]];
- classes=ConnectedComponents[graph];typ={1,2,3,3,2,1};
- ae=Table[Normal[SparseArray[Rule@@@Normal[Counts[
- (3 Quotient[#-1,6]+typ[[Mod[#-1,6]+1]])& /@ c]],3 n]],{c,classes}];
- at=KroneckerProduct[IdentityMatrix[n],{{1,1,1}}];a=Join[at,ae];
+AngleSystem[t_Association]:=Module[{n=t["Tetrahedra"],edges,index,classes,typ={1,2,3,3,2,1},ae,a,b},
+ edges=Subsets[Range[0,3],{2}];index=First /@ PositionIndex[edges];
+ classes=ConnectedComponents[gluingGraph[6 n,t["FacePairings"],6 #1+index[Sort[#2]]&,
+  Subsets[DeleteCases[Range[0,3],#],{2}]&]];
+ ae=Normal[SparseArray[Normal[Counts[(3 Quotient[#-1,6]+typ[[Mod[#-1,6]+1]])& /@ #]],3 n]]& /@ classes;
+ a=Join[KroneckerProduct[IdentityMatrix[n],{{1,1,1}}],ae];
  b=Join[ConstantArray[1,n],ConstantArray[2,Length[classes]]];
  <|"Matrix"->a,"RightHandSideInPiUnits"->b,"EdgeMatrix"->ae,
  "EdgeClasses"->classes,"NullSpace"->NullSpace[a]|>
 ];
 lobVolume[v_]:=Total[Im[PolyLog[2,Exp[2 I #]]]/2& /@ v];
 SolveCompleteStructure[t_Association,wp_Integer:120,goal_Integer:45]:=Catch@Module[
- {sys,n=t["Tetrahedra"],a,b,vars,h,lin,theta,bn,grad,hess,step,delta,rate,old,
- history={},res=Infinity,ang,z,signed,logs,edgeResidual,volume,bw,integral},
+ {sys,n=t["Tetrahedra"],a,b,vars,h,lin,bn,gradient,residual,newtonStep,steps,theta,res,
+ z,signed,logs,edgeResidual},
  assert[goal>0&&wp>=2 goal+20,"InsufficientWorkingPrecision"];
  With[{validation=ValidateIdealTriangulation[t]},If[FailureQ[validation],Throw[validation]]];
  sys=AngleSystem[t];a=sys["Matrix"];b=sys["RightHandSideInPiUnits"];
@@ -96,52 +99,48 @@ SolveCompleteStructure[t_Association,wp_Integer:120,goal_Integer:45]:=Catch@Modu
  lin=LinearOptimization[-h,Join[Thread[a.vars==b],Thread[vars>=h],{h>=0}],
  Append[vars,h],"PrimalMinimizer"];
  assert[VectorQ[lin,NumericQ]&&Last[lin]>0,"NoStrictAngleStructure"];
- theta=N[Pi Most[lin],wp];bn=N[sys["NullSpace"],wp];
- Do[grad=-bn.Log[2 Sin[theta]];res=Max[Abs[grad]];
- If[TrueQ[res<10^-goal],Break[]];
- hess=-bn.DiagonalMatrix[Cot[theta]].Transpose[bn];
- step=-LinearSolve[hess,grad];delta=step.bn;rate=1;old=lobVolume[theta];
- While[Min[theta+rate delta]<=0||Max[theta+rate delta]>=Pi||
- lobVolume[theta+rate delta]<old+rate grad.step/10000,
- rate/=2;assert[rate>2^-100,"NewtonLineSearchFailed"]];
- theta=SetPrecision[theta+rate delta,wp];
- AppendTo[history,<|"Iteration"->iter,"Volume"->lobVolume[theta],
- "GradientResidualBeforeStep"->res,"StepFraction"->rate|>],{iter,80}];
- res=Max[Abs[-bn.Log[2 Sin[theta]]]];
+ bn=N[sys["NullSpace"],wp];
+ gradient[th_]:=-bn.Log[2 Sin[th]];
+ residual[th_]:=Max[Abs[gradient[th]]];
+ (* one damped Newton step: {angles, _} -> {new angles, history record} *)
+ newtonStep[{th_,_}]:=Module[{grad=gradient[th],old=lobVolume[th],step,delta,rate,new},
+  step=-LinearSolve[-bn.DiagonalMatrix[Cot[th]].Transpose[bn],grad];delta=step.bn;
+  rate=NestWhile[With[{r=#/2},assert[r>2^-100,"NewtonLineSearchFailed"];r]&,1,
+   With[{trial=th+# delta},Min[trial]<=0||Max[trial]>=Pi||lobVolume[trial]<old+# grad.step/10000]&];
+  new=SetPrecision[th+rate delta,wp];
+  {new,<|"Volume"->lobVolume[new],"GradientResidualBeforeStep"->Max[Abs[grad]],"StepFraction"->rate|>}];
+ steps=NestWhileList[newtonStep,{N[Pi Most[lin],wp],None},!TrueQ[residual[First[#]]<10^-goal]&,1,80];
+ theta=steps[[-1,1]];res=residual[theta];
  assert[TrueQ[res<10^-goal],"NoInteriorCriticalPoint",<|"Residual"->res|>];
- ang=Partition[theta,3];
- z=Sin[#[[2]]]/Sin[#[[3]]] Exp[I #[[1]]]& /@ ang;
+ z=Sin[#[[2]]]/Sin[#[[3]]] Exp[I #[[1]]]& /@ Partition[theta,3];
  signed=MapThread[If[#2==1,#1,Conjugate[#1]]&,{z,t["Orientations"]}];
  logs=Flatten[MapThread[#2 {Log[#1],Log[1/(1-#1)],Log[(#1-1)/#1]}&,
  {signed,t["Orientations"]}]];
  edgeResidual=Max[Abs[Exp[sys["EdgeMatrix"].logs]-1]];
  assert[edgeResidual<10^(-goal+5),"ComplexEdgeEquationsFailed"];
- volume=lobVolume[theta];bw=Total[Im[PolyLog[2,#]]+Arg[1-#] Log[Abs[#]]& /@ z];
- integral=Total[Table[-NIntegrate[Log[2 Sin[u]],{u,0,th},WorkingPrecision->wp,
- AccuracyGoal->goal,PrecisionGoal->goal,Method->{"GlobalAdaptive","SymbolicProcessing"->0}],{th,theta}]];
  <|"Angles"->theta,"UnsignedShapes"->z,"ShapesInOriginalLabels"->signed,
- "Volume"->volume,"BlochWignerVolume"->bw,"QuadratureVolume"->integral,
+ "Volume"->lobVolume[theta],"BlochWignerVolume"->Total[Im[PolyLog[2,#]]+Arg[1-#] Log[Abs[#]]& /@ z],
+ "QuadratureVolume"->Total[-NIntegrate[Log[2 Sin[u]],{u,0,#},WorkingPrecision->wp,
+  AccuracyGoal->goal,PrecisionGoal->goal,Method->{"GlobalAdaptive","SymbolicProcessing"->0}]& /@ theta],
  "GradientResidual"->res,"AngleEquationResidual"->Max[Abs[a.theta-Pi b]],
  "ComplexEdgeResidual"->edgeResidual,"MinimumAngle"->Min[theta],
- "WorkingPrecision"->wp,"RequestedGoal"->goal,"History"->history,"AngleSystem"->sys|>
+ "WorkingPrecision"->wp,"RequestedGoal"->goal,
+ "History"->MapIndexed[Prepend[Last[#1],"Iteration"->First[#2]]&,Rest[steps]],"AngleSystem"->sys|>
 ];
 tripleMap[src_,dst_]:=Module[{rows,h},
  rows=MapThread[Function[{u,v},{v[[2]] u[[1]],v[[2]] u[[2]],-v[[1]] u[[1]],-v[[1]] u[[2]]}],{src,dst}];
  h=Partition[First[NullSpace[rows]],2];h/Sqrt[Det[h]]];
 BuildHolonomy[t_Association,s_Association]:=Module[
- {n=t["Tetrahedra"],fp=t["FacePairings"],pts,trans,dev,gen,c,j,k,f,p,v},
+ {n=t["Tetrahedra"],glu=gluings[t["FacePairings"]],pts,trans,links,develop,dev,gen,c={{1,-(1/2+I/3)},{0,1}}},
  pts=({{1,0},{0,1},{1,1},{#,1}}& /@ s["ShapesInOriginalLabels"]);
- trans=Table[j=r["tetrahedron"]+1;k=r["neighbor"]+1;f=r["face"]+1;
- p=r["vertex_permutation"]+1;v=DeleteCases[Range[4],f];
- tripleMap[pts[[k,p[[v]]]],pts[[j,v]]],{r,fp}];
- dev=ConstantArray[0,n];dev[[1]]=IdentityMatrix[2];
- Do[Do[j=fp[[i]]["tetrahedron"]+1;k=fp[[i]]["neighbor"]+1;
- If[MatrixQ[dev[[j]]]&&!MatrixQ[dev[[k]]],dev[[k]]=dev[[j]].trans[[i]]],{i,Length[fp]}],{n}];
- gen=Table[j=fp[[i]]["tetrahedron"]+1;k=fp[[i]]["neighbor"]+1;
- dev[[j]].trans[[i]].Inverse[dev[[k]]],{i,Length[fp]}];
- c={{1,-(1/2+I/3)},{0,1}};gen=(c.#.Inverse[c]& /@ gen);
- gen=Select[gen,Norm[#-Tr[#]/2 IdentityMatrix[2]]>10^-20&];
- gen=DeleteDuplicates[gen,Min[Norm[#1-#2],Norm[#1+#2]]<10^-20&];
+ trans=Function[{j,k,p,f},With[{v=DeleteCases[Range[0,3],f]+1},
+  tripleMap[pts[[k+1,p[[v]]+1]],pts[[j+1,v]]]]]@@@glu;
+ (* {tetrahedron, neighbor, transition}, 1-based *)
+ links=MapThread[Append,{glu[[All,{1,2}]]+1,trans}];
+ develop[d_,{j_,k_,m_}]:=If[MatrixQ[d[[j]]]&&!MatrixQ[d[[k]]],ReplacePart[d,k->d[[j]].m],d];
+ dev=FixedPoint[Fold[develop,#,links]&,ReplacePart[ConstantArray[0,n],1->IdentityMatrix[2]]];
+ gen=c.#.Inverse[c]& /@ ((dev[[#1]].#3.Inverse[dev[[#2]]]&)@@@links);
+ gen=DeleteDuplicates[Select[gen,nontrivialQ[#,10^-20]&],Min[Norm[#1-#2],Norm[#1+#2]]<10^-20&];
  <|"Generators"->gen,"DevelopingMaps"->dev,"FaceTransitions"->trans,
  "BasepointUpperHalfSpace"->{1/2,1/3,1}|>
 ];
@@ -151,91 +150,92 @@ bisectorNormal[g_]:=With[{o=orbit[g]},Rest[o]/(First[o]-1)];
 kleinAction[g_,v_]:=Module[{m=g.{{1+v[[3]],v[[1]]+I v[[2]]},
  {v[[1]]-I v[[2]],1-v[[3]]}}.ConjugateTranspose[g]},
  Re[{2 m[[1,2]],-2 I m[[1,2]],m[[1,1]]-m[[2,2]]}/Tr[m]]];
-BuildDirichletDomain[h_Association,maxIterations_Integer:12]:=Catch@Module[
- {pool=N[h["Generators"]],normals,hull,active,coords,near,ids,vertices,candidates,
- history={},stable=False,faces,pts,ctr,u,v,edges,links={},edgeClasses,angles,
- residual,pairResidual,facePairs,fe,ei,ej,mapped,ff,n1,n2,invNormals},
- Do[normals=bisectorNormal /@ pool;hull=ConvexHullMesh[normals];
- active=DeleteDuplicates[Flatten[MeshCells[hull,2][[All,1]]]];
- coords=MeshCoordinates[hull];near=Nearest[normals->"Index"];
- ids=(First[near[#]]& /@ coords[[active]]);pool=pool[[ids]];
- normals=bisectorNormal /@ pool;hull=ConvexHullMesh[normals];coords=MeshCoordinates[hull];
- vertices=DeleteDuplicates[Table[Quiet[LinearSolve[coords[[Take[face[[1]],3]]],{1.,1.,1.}]],
- {face,MeshCells[hull,2]}],Norm[#1-#2]<10^-7&];
+(* One refinement round: keep the generators whose bisectors bound the domain, find the domain
+   vertices from the polar hull, and collect the products that still cut the domain. *)
+refineDomain[gens_]:=Module[{all=bisectorNormal /@ gens,hull,near,keep,pool,normals,dual,vertices},
+ hull=ConvexHullMesh[all];near=Nearest[all->"Index"];
+ keep=First[near[#]]& /@ MeshCoordinates[hull][[DeleteDuplicates[Flatten[MeshCells[hull,2][[All,1]]]]]];
+ pool=gens[[keep]];normals=bisectorNormal /@ pool;dual=ConvexHullMesh[normals];
+ vertices=DeleteDuplicates[Quiet[LinearSolve[MeshCoordinates[dual][[Take[First[#],3]]],{1.,1.,1.}]]& /@
+  MeshCells[dual,2],Norm[#1-#2]<10^-7&];
  assert[MatrixQ[vertices,NumericQ],"DegeneratePolarHull"];
- candidates=Join[pool,Flatten[Table[a.b,{a,pool},{b,pool}],1]];
- candidates=Select[candidates,Norm[#-Tr[#]/2 IdentityMatrix[2]]>10^-7&];
- candidates=DeleteDuplicatesBy[candidates,Round[bisectorNormal[#],10^-7]&];
- candidates=Select[candidates,Max[vertices.bisectorNormal[#]]>1+10^-8&];
- AppendTo[history,<|"Iteration"->iter,"Faces"->Length[pool],
- "Vertices"->Length[vertices],"NewCuts"->Length[candidates]|>];
- If[Length[candidates]==0,stable=True;Break[]];pool=Join[pool,candidates],{iter,maxIterations}];
- assert[stable,"DomainDidNotStabilize"];
+ <|"Pool"->pool,"Normals"->normals,"Vertices"->vertices,"Candidates"->
+  Select[DeleteDuplicatesBy[Select[Join[pool,Catenate[Outer[Dot,pool,pool,1]]],nontrivialQ[#,10^-7]&],
+   Round[bisectorNormal[#],10^-7]&],Max[vertices.bisectorNormal[#]]>1+10^-8&]|>];
+BuildDirichletDomain[h_Association,maxIterations_Integer:12]:=Catch@Module[
+ {steps,pool,normals,vertices,faceCycle,faces,edges,edgeIndex,near,invNormals,facePairs,
+ pairing,pairings,pairResidual,edgeClasses,dihedral,angles,residual},
+ assert[maxIterations>0,"DomainDidNotStabilize"];
+ steps=NestWhileList[refineDomain[Join[#Pool,#Candidates]]&,refineDomain[N[h["Generators"]]],
+  #Candidates=!={}&,1,maxIterations-1];
+ assert[Last[steps]["Candidates"]==={},"DomainDidNotStabilize"];
+ {pool,normals,vertices}=Lookup[Last[steps],{"Pool","Normals","Vertices"}];
  assert[Max[Norm /@ vertices]<1+10^-7,"DomainExtendsOutsideBall"];
  assert[Max[Flatten[vertices.Transpose[normals]]]<1+10^-7,"HalfSpaceViolation"];
- faces=Table[ids=Flatten[Position[Abs[vertices.q-1],x_/;x<10^-7]];
- assert[Length[ids]>=3,"DegenerateFace"];pts=vertices[[ids]];ctr=Mean[pts];
- u=Normalize[First[pts]-ctr];v=Normalize[Cross[q,u]];
- ids[[Ordering[ArcTan[(#-ctr).u,(#-ctr).v]& /@ pts]]],{q,normals}];
- edges=DeleteDuplicates[Sort /@ Flatten[(Partition[Append[#,First[#]],2,1]& /@ faces),1]];
+ (* vertices on the bisector plane q.x==1, in angular order around their centroid *)
+ faceCycle[q_]:=Module[{ids=Flatten[Position[Abs[vertices.q-1],x_/;x<10^-7]],pts,ctr,u,v},
+  assert[Length[ids]>=3,"DegenerateFace"];pts=vertices[[ids]];ctr=Mean[pts];
+  u=Normalize[First[pts]-ctr];v=Normalize[Cross[q,u]];
+  ids[[Ordering[ArcTan[(#-ctr).u,(#-ctr).v]& /@ pts]]]];
+ faces=faceCycle /@ normals;
+ edges=DeleteDuplicates[Sort /@ Catenate[cyclicPairs /@ faces]];edgeIndex=First /@ PositionIndex[edges];
  assert[Length[vertices]-Length[edges]+Length[faces]==2,"PolyhedronEulerCheckFailed"];
- near=Nearest[vertices->"Index"];pairResidual=0.;
+ near=Nearest[vertices->"Index"];
  invNormals=bisectorNormal /@ (Inverse /@ pool);
  facePairs=(First[Nearest[normals->"Index",#]]& /@ invNormals);
  assert[Max[Norm /@ (invNormals-normals[[facePairs]])]<10^-7,"MissingInverseFace"];
- Do[mapped=kleinAction[Inverse[pool[[i]]],#]& /@ vertices[[faces[[i]]]];
- ids=First[near[#]]& /@ mapped;
- pairResidual=Max[pairResidual,Max[Norm /@ (mapped-vertices[[ids]])]];
- assert[Sort[ids]==Sort[faces[[facePairs[[i]]]]],"FacePairingMismatch"];
- fe=Partition[Append[faces[[i]],First[faces[[i]]]],2,1];
- Do[ei=First[FirstPosition[edges,Sort[ee]]];
- mapped=Sort[First[near[kleinAction[Inverse[pool[[i]]],vertices[[#]]]]]& /@ ee];
- ej=First[FirstPosition[edges,mapped]];AppendTo[links,UndirectedEdge[ei,ej]],{ee,fe}],
- {i,Length[faces]}];
+ (* face i -> {vertex residual of its pairing, links from its edges to their images} *)
+ pairing[i_]:=Module[{g=Inverse[pool[[i]]],mapped,ids},
+  mapped=kleinAction[g,#]& /@ vertices[[faces[[i]]]];ids=First[near[#]]& /@ mapped;
+  assert[Sort[ids]==Sort[faces[[facePairs[[i]]]]],"FacePairingMismatch"];
+  {Max[Norm /@ (mapped-vertices[[ids]])],
+   Function[e,UndirectedEdge[edgeIndex[Sort[e]],edgeIndex[Sort[First[near[kleinAction[g,#]]]& /@ vertices[[e]]]]]] /@
+    cyclicPairs[faces[[i]]]}];
+ pairings=pairing /@ Range[Length[faces]];
+ pairResidual=Max[0.,pairings[[All,1]]];
  assert[pairResidual<10^-7,"PairingVertexResidualTooLarge"];
- edgeClasses=ConnectedComponents[Graph[Range[Length[edges]],links]];
- angles=Table[ff=Select[Range[Length[faces]],SubsetQ[faces[[#]],ee]&];
- assert[Length[ff]==2,"InvalidPolyhedronEdge"];{n1,n2}=normals[[ff]];
- ArcCos[Clip[(1-n1.n2)/Sqrt[(n1.n1-1)(n2.n2-1)],{-1,1}]],{ee,edges}];
+ edgeClasses=ConnectedComponents[Graph[Range[Length[edges]],Catenate[pairings[[All,2]]]]];
+ dihedral[e_]:=With[{ff=Select[Range[Length[faces]],SubsetQ[faces[[#]],e]&]},
+  assert[Length[ff]==2,"InvalidPolyhedronEdge"];
+  With[{n1=normals[[ff[[1]]]],n2=normals[[ff[[2]]]]},ArcCos[Clip[(1-n1.n2)/Sqrt[(n1.n1-1)(n2.n2-1)],{-1,1}]]]];
+ angles=dihedral /@ edges;
  residual=Max[Abs[(Total[angles[[#]]]& /@ edgeClasses)-2 Pi]];
  assert[residual<10^-7,"EdgeCycleAngleCheckFailed"];
  <|"Vertices"->vertices,"Normals"->normals,"Faces"->faces,"Edges"->edges,
  "Generators"->pool,"FacePairs"->facePairs,"EdgeClasses"->edgeClasses,
  "PairingVertexResidual"->pairResidual,"EdgeCycleAngleResidual"->residual,
  "IdealVertices"->Flatten[Position[Norm /@ vertices,x_/;Abs[x-1]<10^-7]],
- "History"->history,"Status"->"Numerically checked candidate; not certified"|>
+ "History"->MapIndexed[<|"Iteration"->First[#2],"Faces"->Length[#1["Pool"]],
+  "Vertices"->Length[#1["Vertices"]],"NewCuts"->Length[#1["Candidates"]]|>&,steps],
+ "Status"->"Numerically checked candidate; not certified"|>
 ];
-IntegrateDomainVolume[d_Association,goal_Integer:8]:=Module[
- {verts=d["Vertices"],tri,aa,bb,cc,jac,fun,values},
- tri=Flatten[Table[Table[{Mean[verts[[f]]],verts[[f[[i]]]],
- verts[[f[[Mod[i,Length[f]]+1]]]]},{i,Length[f]}],{f,d["Faces"]}],1];
- values=Table[{aa,bb,cc}=SetPrecision[t,30];
- If[Abs[bb.bb-1]<10^-7,bb=Normalize[bb]];
- If[Abs[cc.cc-1]<10^-7,cc=Normalize[cc]];
- jac=Abs[Det[{aa,bb-aa,cc-aa}]];
- fun[u_?NumericQ,w_?NumericQ]:=Module[{r=Norm[aa+u (bb-aa)+(1-u) w (cc-aa)]},
+(* fan triangulation {centroid, v_i, v_(i+1)} of a polygonal face *)
+fanTriangles[verts_,f_]:=With[{p=verts[[f]]},Prepend[#,Mean[p]]& /@ cyclicPairs[p]];
+fluxIntegral[t_,goal_]:=Module[{a,b,c,jac,fun},
+ {a,b,c}=SetPrecision[t,30];
+ {b,c}=If[Abs[#.#-1]<10^-7,Normalize[#],#]& /@ {b,c};
+ jac=Abs[Det[{a,b-a,c-a}]];
+ fun[u_?NumericQ,w_?NumericQ]:=Module[{r=Norm[a+u (b-a)+(1-u) w (c-a)]},
  jac (1-u) (r/(1-r^2)-ArcTanh[r])/(2 r^3)];
  NIntegrate[fun[u,w],{u,0,1},{w,0,1},WorkingPrecision->30,
  AccuracyGoal->goal,PrecisionGoal->goal,MaxRecursion->20,
- Method->{"GlobalAdaptive","SymbolicProcessing"->0}],{t,tri}];
+ Method->{"GlobalAdaptive","SymbolicProcessing"->0}]];
+IntegrateDomainVolume[d_Association,goal_Integer:8]:=Module[
+ {tri=Catenate[fanTriangles[d["Vertices"],#]& /@ d["Faces"]],values},
+ values=fluxIntegral[#,goal]& /@ tri;
  <|"Volume"->Total[values],"Triangles"->Length[tri],"PerTriangleGoal"->goal,
  "GeometryPrecision"->"Machine precision","TriangleIntegrals"->values|>
 ];
 toPoincare[k_]:=k/(1+Sqrt[Max[0,1-k.k]]);
-subdivide[{a_,b_,c_},0]:={{a,b,c}};
-subdivide[{a_,b_,c_},n_]:=Join@@(subdivide[#,n-1]& /@
- {{a,(a+b)/2,(a+c)/2},{b,(b+c)/2,(a+b)/2},
- {c,(a+c)/2,(b+c)/2},{(a+b)/2,(b+c)/2,(a+c)/2}});
+splitTriangle[{a_,b_,c_}]:={{a,(a+b)/2,(a+c)/2},{b,(b+c)/2,(a+b)/2},
+ {c,(a+c)/2,(b+c)/2},{(a+b)/2,(b+c)/2,(a+c)/2}};
 DomainGraphics[d_Association,model_String:"Poincare"]:=Module[
- {verts=d["Vertices"],map,polys,curves,ideal},
- map=If[model=="Klein",Identity,toPoincare];
- polys=Flatten[Table[Flatten[Table[subdivide[{Mean[verts[[f]]],verts[[f[[i]]]],
- verts[[f[[Mod[i,Length[f]]+1]]]]},2],{i,Length[f]}],1],{f,d["Faces"]}],1];
+ {verts=d["Vertices"],map=If[model=="Klein",Identity,toPoincare],polys,curves},
+ polys=Nest[Catenate[splitTriangle /@ #]&,Catenate[fanTriangles[verts,#]& /@ d["Faces"]],2];
  curves=Table[Line[map /@ Table[(1-u) verts[[e[[1]]]]+u verts[[e[[2]]]],{u,0,1,1/24}]],{e,d["Edges"]}];
- ideal=map /@ verts[[d["IdealVertices"]]];
  Graphics3D[{{Opacity[.32],RGBColor[.15,.55,.82],EdgeForm[None],Polygon[map /@ #]& /@ polys},
  {RGBColor[.12,.25,.4],AbsoluteThickness[1],curves},
- {RGBColor[.95,.4,.15],PointSize[.02],Point[ideal]},
+ {RGBColor[.95,.4,.15],PointSize[.02],Point[map /@ verts[[d["IdealVertices"]]]]},
  {Gray,PointSize[.012],Point[{0,0,0}]}},Boxed->False,Lighting->"Neutral",
  PlotRange->{{-1,1},{-1,1},{-1,1}},ImageSize->600,SphericalRegion->True,
  PlotLabel->Row[{"Dirichlet domain — ",model," model"}]]
