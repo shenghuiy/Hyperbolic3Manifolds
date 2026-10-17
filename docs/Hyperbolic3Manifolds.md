@@ -35,15 +35,15 @@ $$\mathbb H^3 = \{(x,y,t) : t>0\}, \qquad ds^2 = \frac{dx^2+dy^2+dt^2}{t^2}, \qq
 
 The horizontal coordinates combine into a complex number $w=x+iy$. The ideal boundary $t=0$ is infinitely far away, and together with a point $\infty$ it forms $\mathbb C\cup\{\infty\}$. This is the sphere that bounds the Poincaré ball, just as the circle bounds the Poincaré disk. Geodesics are vertical lines and semicircles perpendicular to the boundary.
 
-An **ideal tetrahedron** is the convex hull of four distinct ideal points. An isometry can move three of its vertices to $\infty, 0, 1$. The fourth vertex then lands at a complex number $z$ with $\operatorname{Im} z>0$, the **shape parameter**. For ordered vertices $a,b,c,d$ the shape is the cross ratio
+An **ideal tetrahedron** is the convex hull of four distinct ideal points. An isometry can move three of its vertices to $\infty, 0, 1$. The fourth vertex then lands at a complex number $z$ with $\mathrm{Im}\, z>0$, the **shape parameter**. For ordered vertices $a,b,c,d$ the shape is the cross ratio
 
 $$z = \frac{(d-b)(c-a)}{(d-a)(c-b)}.$$
 
 The three pairs of opposite edges carry the shapes $z,\ \tfrac{1}{1-z},\ \tfrac{z-1}{z}$. Their arguments are the dihedral angles $\alpha,\beta,\gamma$, and $\alpha+\beta+\gamma=\pi$. Despite its infinite extent, the tetrahedron has finite volume:
 
-$$\operatorname{Vol} = \Lambda(\alpha)+\Lambda(\beta)+\Lambda(\gamma), \qquad \Lambda(\theta) = -\int_0^\theta \log|2\sin u|\,du = \tfrac12\operatorname{Im}\operatorname{Li}_2(e^{2i\theta}).$$
+$$\mathrm{Vol} = \Lambda(\alpha)+\Lambda(\beta)+\Lambda(\gamma), \qquad \Lambda(\theta) = -\int_0^\theta \log|2\sin u|\,du = \tfrac12\mathrm{Im}\mathrm{Li}_2(e^{2i\theta}).$$
 
-Equivalently, $\operatorname{Vol} = D(z) = \operatorname{Im}\operatorname{Li}_2(z) + \arg(1-z)\log|z|$ (the Bloch–Wigner dilogarithm).
+Equivalently, $\mathrm{Vol} = D(z) = \mathrm{Im}\mathrm{Li}_2(z) + \arg(1-z)\log|z|$ (the Bloch–Wigner dilogarithm).
 
 The regular ideal tetrahedron has $z=\tfrac12+\tfrac{\sqrt3}{2}i$, all angles $\pi/3$, and volume $3\Lambda(\pi/3)\approx 1.0149416064$. The figure-eight knot complement `m004` is built from two of them, so its volume is $\approx 2.0298832128$.
 
@@ -171,7 +171,7 @@ Finds the interior maximum of the volume functional on angle structure space.
 
 1. Runs `ValidateIdealTriangulation`. If it fails, that failure is returned.
 2. Finds a strictly positive starting point with `LinearOptimization`, which maximizes the smallest angle $h$. Fails with `NoStrictAngleStructure` if $h \le 0$.
-3. Takes Newton steps in the null space at working precision `wp`. The gradient is $-B\log(2\sin\theta)$ and the Hessian is $-B\,\operatorname{diag}(\cot\theta)\,B^T$. A backtracking line search keeps $0<\theta<\pi$ and enforces an Armijo-type increase. It stops when $\max|\nabla| < 10^{-\text{goal}}$, after at most 80 iterations.
+3. Takes Newton steps in the null space at working precision `wp`. The gradient is $-B\log(2\sin\theta)$ and the Hessian is $-B\,\mathrm{diag}(\cot\theta)\,B^T$. A backtracking line search keeps $0<\theta<\pi$ and enforces an Armijo-type increase. It stops when $\max|\nabla| < 10^{-\text{goal}}$, after at most 80 iterations.
 4. Converts angles to shapes, $z = \dfrac{\sin\theta_2}{\sin\theta_3}e^{i\theta_1}$, and conjugates the shape for negatively oriented tetrahedra.
 5. Checks the complex edge equations $\prod z^{\pm1} = 1$ through logarithms.
 6. Computes the volume three ways: the Lobachevsky sum, Bloch–Wigner, and direct `NIntegrate` of $-\log(2\sin u)$.
@@ -199,7 +199,7 @@ A failure here does **not** prove the manifold is non-hyperbolic. It only means 
 ### 4.5 `BuildHolonomy[t, s]`
 
 Places each tetrahedron with vertices $(\infty, 0, 1, z)$, written as projective vectors `{1,0}, {0,1}, {1,1}, {z,1}`. For every face pairing, `tripleMap` solves for the $\mathrm{SL}(2,\mathbb C)$ matrix that matches the three shared vertices. A spanning-tree development from tetrahedron 0 gives each tetrahedron a developing map. Each face pairing then yields the generator
-$g = \operatorname{dev}_j \cdot \operatorname{trans} \cdot \operatorname{dev}_k^{-1}$.
+$g = \mathrm{dev}_j \cdot \mathrm{trans} \cdot \mathrm{dev}_k^{-1}$.
 
 The generators are conjugated so that the basepoint $(1/2,\,1/3,\,1)$ in upper half space becomes $(0,0,1)$, which corresponds to the center of the ball model. Identity elements and duplicates up to sign ($\pm g$) are removed.
 
@@ -232,7 +232,7 @@ Failure tags: `DegeneratePolarHull`, `DomainDidNotStabilize`, `DomainExtendsOuts
 
 Computes the volume of the domain without using the tetrahedra. The radial field $F(k)=f(r)\,k$ with
 
-$$f(r) = \frac{r/(1-r^2) - \operatorname{arctanh} r}{2r^3}$$
+$$f(r) = \frac{r/(1-r^2) - \mathrm{arctanh}\, r}{2r^3}$$
 
 has divergence $(1-|k|^2)^{-2}$, the Klein volume density. By the divergence theorem, the volume becomes a flux integral over the faces. Each face is split into triangles around its centroid and integrated with `NIntegrate` at 30 digits, with accuracy and precision goal `goal` per triangle. The singularities at ideal vertices are integrable. Ideal vertices are snapped onto the unit sphere first.
 
@@ -272,7 +272,7 @@ vTet = NIntegrate[Sqrt[3] Log[2 (1 + r)/((1 - r) (1 + 3 r))]/(1 + 3 r^2), {r, 0,
 N[2 vTet, 45]   (* 2.02988321281930725004240510854904057188337861506 *)
 ```
 
-This agrees with $-6\int_0^{\pi/3}\log(2\sin\theta)\,d\theta$ and $2\operatorname{Im}\operatorname{Li}_2(e^{i\pi/3})$. The test suite repeats this check through the package: `SolveCompleteStructure[DecodeTriangulation["cPcbbbiht"], 80, 25]` agrees with $2\operatorname{Im}\operatorname{Li}_2(e^{i\pi/3})$ to $10^{-24}$.
+This agrees with $-6\int_0^{\pi/3}\log(2\sin\theta)\,d\theta$ and $2\mathrm{Im}\mathrm{Li}_2(e^{i\pi/3})$. The test suite repeats this check through the package: `SolveCompleteStructure[DecodeTriangulation["cPcbbbiht"], 80, 25]` agrees with $2\mathrm{Im}\mathrm{Li}_2(e^{i\pi/3})$ to $10^{-24}$.
 
 ### 6.2 K14n12345 (main target)
 
