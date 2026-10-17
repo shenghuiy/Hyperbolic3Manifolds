@@ -171,7 +171,7 @@ Finds the interior maximum of the volume functional on angle structure space.
 
 1. Runs `ValidateIdealTriangulation`. If it fails, that failure is returned.
 2. Finds a strictly positive starting point with `LinearOptimization`, which maximizes the smallest angle $h$. Fails with `NoStrictAngleStructure` if $h \le 0$.
-3. Takes Newton steps in the null space at working precision `wp`. The gradient is $-B\log(2\sin\theta)$ and the Hessian is $-B\,\mathrm{diag}(\cot\theta)\,B^T$. A backtracking line search keeps $0<\theta<\pi$ and enforces an Armijo-type increase. It stops when $\max|\nabla| < 10^{-\text{goal}}$, after at most 80 iterations.
+3. Takes Newton steps in the null space at working precision `wp`. The gradient is $-B\log(2\sin\theta)$ and the Hessian is $-B\,\operatorname{diag}(\cot\theta)\,B^T$. A backtracking line search keeps $0<\theta<\pi$ and enforces an Armijo-type increase. It stops when $\max|\nabla| < 10^{-\text{goal}}$, after at most 80 iterations.
 4. Converts angles to shapes, $z = \dfrac{\sin\theta_2}{\sin\theta_3}e^{i\theta_1}$, and conjugates the shape for negatively oriented tetrahedra.
 5. Checks the complex edge equations $\prod z^{\pm1} = 1$ through logarithms.
 6. Computes the volume three ways: the Lobachevsky sum, Bloch–Wigner, and direct `NIntegrate` of $-\log(2\sin u)$.
@@ -199,7 +199,7 @@ A failure here does **not** prove the manifold is non-hyperbolic. It only means 
 ### 4.5 `BuildHolonomy[t, s]`
 
 Places each tetrahedron with vertices $(\infty, 0, 1, z)$, written as projective vectors `{1,0}, {0,1}, {1,1}, {z,1}`. For every face pairing, `tripleMap` solves for the $\mathrm{SL}(2,\mathbb C)$ matrix that matches the three shared vertices. A spanning-tree development from tetrahedron 0 gives each tetrahedron a developing map. Each face pairing then yields the generator
-$g = \text{dev}_j \cdot \text{trans} \cdot \text{dev}_k^{-1}$.
+$g = \operatorname{dev}_j \cdot \operatorname{trans} \cdot \operatorname{dev}_k^{-1}$.
 
 The generators are conjugated so that the basepoint $(1/2,\,1/3,\,1)$ in upper half space becomes $(0,0,1)$, which corresponds to the center of the ball model. Identity elements and duplicates up to sign ($\pm g$) are removed.
 
