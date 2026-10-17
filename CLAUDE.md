@@ -16,6 +16,7 @@ $K -script "$PWD/tests/RunTests.wl"                       # all suites in depend
 $K -script "$PWD/tests/RunTests.wl" Hyperbolic3Manifolds  # run only the named suite(s)
 $K -script "$PWD/tests/CheckPrecision.wl"  # re-solve at 160 digits, compare to outputs/structure.wxf
 $K -script "$PWD/tests/TestK5a1.wl"        # end-to-end regression on K5a1 -> outputs/K5a1/
+$K -script "$PWD/tests/TestCensus.wl"      # m412 and m203 (two cusps) -> outputs/{m412,m203}/, README images
 ```
 
 Suites (`tests/*.wlt`, run by `RunTests.wl` in this order):

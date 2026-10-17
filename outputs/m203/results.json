@@ -1,0 +1,30 @@
+{
+	"Manifold":"m203",
+	"Volume":"4.05976642563861450008481021709808114376675723012119916806995642710638990503298`50.",
+	"DomainVEF":[
+		48,
+		74,
+		28
+	],
+	"IdealVertices":2,
+	"FacePairingResidual":1.0114156128027534e-14,
+	"EdgeAngleResidual":1.7763568394002505e-15,
+	"DomainIntegral":4.059766425658564,
+	"IntegralDifference":1.9949264159589272e-11,
+	"Checks":{
+		"Tetrahedra":true,
+		"TorusCusps":true,
+		"PositiveAngles":true,
+		"AngleEquations":true,
+		"Stationarity":true,
+		"ComplexGluing":true,
+		"VolumeFormulas":true,
+		"ReferenceAgreement":true,
+		"IdealVertices":true,
+		"FacePairing":true,
+		"EdgeAngles":true,
+		"IndependentDomainIntegral":true
+	},
+	"AllPassed":true,
+	"Certification":"Numerical checks only"
+}
