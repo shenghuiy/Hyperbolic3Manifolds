@@ -55,7 +55,14 @@ Runs the whole pipeline on the three-tetrahedron K5a1 complement (signature `dLQ
 $K -script "$PWD/tests/TestCensus.wl"
 ```
 
-Runs the whole pipeline on the two-cusped census manifolds m412 (`fLLQcbdeedemnamjp`, 5 tetrahedra) and m203 (`eLMkbcddddedde`, 4 tetrahedra) and writes `record.json`, `results.json` and the README image `preview.png` to `outputs/m412/` and `outputs/m203/`. The signatures come from SnapPy 3.3.2 (`triangulation_isosig(decorated=False)`); SnapPy's 10-digit volumes are used only for the comparison check. Each manifold gets 12 checks: tetrahedron and torus-cusp counts, the structure residuals, agreement with the reference volume to `1e-9`, two ideal vertices, face pairing and edge-cycle residuals, and the independent domain integral. Exits 1 if any check fails.
+Runs the whole pipeline on the two-cusped census manifolds m412 (`fLLQcbdeedemnamjp`, 5 tetrahedra) and m203 (`eLMkbcddddedde`, 4 tetrahedra) and writes `record.json`, `results.json` and the README image `preview.png` to `outputs/m412/` and `outputs/m203/`. The signatures come from SnapPy 3.3.2 (`triangulation_isosig(decorated=False)`); SnapPy's 10-digit volumes are used only for the comparison check.
+
+The signatures were cross-checked once, by hand, with the C++ engine of Regina 7.4.1, built from the release tarball. This check is not part of the test suite and Regina is not a dependency. For each signature:
+
+- `regina::Census::lookup` finds it in Regina's orientable cusped hyperbolic census under the expected name (`m412 : #1`, `m203 : #1`). m203 is also listed as `L206002` in Christy's knot/link table.
+- Regina builds the manifold from its own copy of the Callahan–Hildebrand–Weeks census data (`SnapPeaCensusManifold(SEC_5, n).construct()`). The result has the identical isomorphism signature, and `isIsomorphicTo` confirms it matches the decoded triangulation.
+
+The names m412 and m203 come from the Callahan–Hildebrand–Weeks census in both programs, so the cross-check confirms that the triangulations exist and carry those names in two independent codebases. It does not independently re-derive the naming. Each manifold gets 12 checks: tetrahedron and torus-cusp counts, the structure residuals, agreement with the reference volume to `1e-9`, two ideal vertices, face pairing and edge-cycle residuals, and the independent domain integral. Exits 1 if any check fails.
 
 | Manifold | Volume | Domain V, E, F | Integral minus volume |
 |---|---|---|---|

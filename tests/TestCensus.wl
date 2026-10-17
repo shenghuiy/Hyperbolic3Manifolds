@@ -2,7 +2,10 @@ root=ParentDirectory[DirectoryName[$InputFileName]];
 Get[FileNameJoin[{root,"src","Hyperbolic3Manifolds.wl"}]];
 require[x_]:=If[!AssociationQ[x],Print["Stage failed: ",x];Exit[1],x];
 (* Signatures from SnapPy 3.3.2: Manifold(name).triangulation_isosig(decorated=False).
-   The SnapPy volumes are used only for comparison, never as input. *)
+   Cross-checked with Regina 7.4.1 (C++ engine): Census::lookup lists each signature under
+   its name in the orientable cusped hyperbolic census, and the triangulation Regina builds
+   from its own copy of the Callahan-Hildebrand-Weeks census data (SnapPeaCensusManifold)
+   has the identical isoSig. The SnapPy volumes are used only for comparison, never as input. *)
 records={
 <|"name"->"m412","triangulation"->"fLLQcbdeedemnamjp","volume"->5.0747080320,"tets"->5,"cusps"->2|>,
 <|"name"->"m203","triangulation"->"eLMkbcddddedde","volume"->4.0597664256,"tets"->4,"cusps"->2|>};
