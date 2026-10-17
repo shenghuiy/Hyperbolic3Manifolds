@@ -59,6 +59,20 @@ The Dirichlet domain has **161 vertices, 243 edges and 84 faces**, with one idea
 
 Open `outputs/14n12345-Wolfram.nb` in Wolfram Desktop for rotatable Poincaré and Klein views. `outputs/results.json` holds the numerical diagnostics, and the `.wxf` files in `outputs/` hold the shapes, holonomy matrices, domain and integral.
 
+## Two-cusped census manifolds: m412 and m203
+
+The same pipeline handles manifolds with more than one cusp. The census manifolds m412 (5 tetrahedra) and m203 (4 tetrahedra) each have two torus cusps, so each Dirichlet domain has two ideal vertices (orange dots, one seen through the translucent faces; the small grey dot is the basepoint at the centre of the ball). Each image shows the Poincaré ball view on the left and the Klein view on the right.
+
+**m412**: volume `5.0747080320482681251060127713726014297`, domain with 56 vertices, 86 edges and 32 faces; the integrated domain volume differs from the tetrahedral sum by about `2.5e-11`.
+
+![Dirichlet domain of m412, Poincaré and Klein models](outputs/m412/preview.png)
+
+**m203**: volume `4.0597664256386145000848102170980811438`, domain with 48 vertices, 74 edges and 28 faces; the integrated domain volume differs from the tetrahedral sum by about `2.0e-11`.
+
+![Dirichlet domain of m203, Poincaré and Klein models](outputs/m203/preview.png)
+
+The signatures `fLLQcbdeedemnamjp` (m412) and `eLMkbcddddedde` (m203) were taken from SnapPy's `Manifold(name).triangulation_isosig(decorated=False)`; nothing else from SnapPy is used, and its volumes serve only as a comparison. A Dirichlet domain depends on the basepoint, so these combinatorics need not match SnapPy's own `dirichlet_domain()`. As above, these are numerical results, not certified domains. `tests/TestCensus.wl` regenerates the images and checks.
+
 ## Running
 
 Requires Wolfram 15.0.1 or later. Load the package from an absolute path:

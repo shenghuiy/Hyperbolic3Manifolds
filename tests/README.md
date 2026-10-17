@@ -49,6 +49,19 @@ Runs the whole pipeline on the three-tetrahedron K5a1 complement (signature `dLQ
 - Domain: 45 vertices, 69 edges, 26 faces
 - Domain integral minus tetrahedral volume: about `1.17e-11`
 
+## Two-cusped census manifolds
+
+```sh
+$K -script "$PWD/tests/TestCensus.wl"
+```
+
+Runs the whole pipeline on the two-cusped census manifolds m412 (`fLLQcbdeedemnamjp`, 5 tetrahedra) and m203 (`eLMkbcddddedde`, 4 tetrahedra) and writes `record.json`, `results.json` and the README image `preview.png` to `outputs/m412/` and `outputs/m203/`. The signatures come from SnapPy 3.3.2 (`triangulation_isosig(decorated=False)`); SnapPy's 10-digit volumes are used only for the comparison check. Each manifold gets 12 checks: tetrahedron and torus-cusp counts, the structure residuals, agreement with the reference volume to `1e-9`, two ideal vertices, face pairing and edge-cycle residuals, and the independent domain integral. Exits 1 if any check fails.
+
+| Manifold | Volume | Domain V, E, F | Integral minus volume |
+|---|---|---|---|
+| m412 | `5.07470803204826812510...` | 56, 86, 32 | about `2.5e-11` |
+| m203 | `4.05976642563861450008...` | 48, 74, 28 | about `2.0e-11` |
+
 ## SnapPy comparison
 
 A separate harness compares Wolfram volumes with freshly computed SnapPy volumes. SnapPy is used only here: nothing it computes is passed to the Wolfram solver, which receives only the original dataset records.
