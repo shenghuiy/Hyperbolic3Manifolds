@@ -71,7 +71,7 @@ The same pipeline handles manifolds with more than one cusp. The census manifold
 
 ![Dirichlet domain of m203, Poincaré and Klein models](outputs/m203/preview.png)
 
-The signatures `fLLQcbdeedemnamjp` (m412) and `eLMkbcddddedde` (m203) were taken from SnapPy's `Manifold(name).triangulation_isosig(decorated=False)`; nothing else from SnapPy is used, and its volumes serve only as a comparison. A Dirichlet domain depends on the basepoint, so these combinatorics need not match SnapPy's own `dirichlet_domain()`. As above, these are numerical results, not certified domains. `tests/TestCensus.wl` regenerates the images and checks.
+The signatures `fLLQcbdeedemnamjp` (m412) and `eLMkbcddddedde` (m203) were taken from SnapPy's `Manifold(name).triangulation_isosig(decorated=False)` and cross-checked against Regina 7.4.1's census (details in [`tests/README.md`](tests/README.md)); nothing else from SnapPy or Regina is used, and its volumes serve only as a comparison. A Dirichlet domain depends on the basepoint, so these combinatorics need not match SnapPy's own `dirichlet_domain()`. As above, these are numerical results, not certified domains. `tests/TestCensus.wl` regenerates the images and checks.
 
 ## Running
 
